@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Persons{% endblock %}</h1>
+  {% if session.username %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for person in persons %}
+    <article class="persons">
+      <header>
+        <div>
+          <h1>{{ person['first_name'] }}</h1>
+          <div class="about">by {{ person['first_name'] }} on {{ person['last_name'] }}</div>
+        </div>
+        {% if session.name['name'] == person['first_name'] %}
+          <a class="action" href="{{ url_for('index') }}">Edit</a>
+        {% endif %}
+      </header>
+      <p class="body">{{ person['first_name'] }}</p>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Add review{% endblock %}</h1>
+  {% if session.username %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="text">Type your thoughts about the book</label>
+    <input name="text" id="username" required>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

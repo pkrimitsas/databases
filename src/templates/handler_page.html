@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Users{% endblock %}</h1>
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('books') }}">View books</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for person in persons %}
+    <article class="Users">
+      <header>
+        <div>
+          {% if person['is_active'] == None or person['is_active'] == 'F' %}
+            <div class="about">username: {{ person['username'] }} password: {{ person['password'] }} and account is not activated.</div>
+          {% else %}
+            <div class="about">username: {{ person['username'] }} password: {{ person['password'] }} and account is activated.</div>
+          {% endif %}
+        </div>
+        {% if person['is_active'] == None or person['is_active'] == 'F' %}
+            <form action="{{ url_for('pactivate', person_id=person['person_id']) }}" method="post">
+                <input type="submit" value="Activate" onclick="return confirm('Are you sure?');">
+            </form>
+        {% else %}
+            <form action="{{ url_for('pdeactivate', person_id=person['person_id']) }}" method="post">
+                <input class="danger" type="submit" value="Deactivate" onclick="return confirm('Are you sure?');">
+            </form>
+        {% endif %}
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

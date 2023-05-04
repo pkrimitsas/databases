@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Books{% endblock %}</h1>
+  {% if session.username %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+  {% endif %}
+  {% if session.husername %}
+  <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for book in books %}
+    <article class="Books">
+      <header>
+        <div>
+          <h1>{{ book['title'] }}</h1>
+          <div class="about"><img src="{{ book['picture'] }}" /></div>
+          <div class="about">Author : {{ book['author'] }}</div>
+          <div class="about">Publisher : {{ book['publisher'] }}</div>
+          <div class="about">ISBN : {{ book['ISBN'] }}</div>
+          <div class="about">Pages : {{ book['pages'] }}</div>
+          <div class="about">Summary : {{ book['summary'] }}</div>
+          <div class="about">Theme : {{ book['theme'] }}</div>
+          <div class="about">Language : {{ book['blanguage'] }}</div>
+          <div class="about">Keywords : {{ book['keywords'] }}</div>
+          <div class="about">Total copies : {{ book['copies'] }} in school: {{ book['school_id'] }}</div>
+          {% for review in reviews %}
+            {% if review['ISBN'] == book['ISBN'] %}
+              {% if review['is_approved'] == 'T' %}
+                <div class="about">User : {{ review['username'] }} wrote {{ review['opinion'] }}</div>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if session.husername %}
+          <a class="action" href="{{ url_for('index') }}">Book stuff -> TODO</a>
+          <a class="action" href="{{ url_for('view_reviews', ISBN=book['ISBN']) }}">View and Edit Reviews</a>
+        {% else %}
+          <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
+        {% endif %}
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

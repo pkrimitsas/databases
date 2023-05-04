@@ -1,0 +1,27 @@
+<!doctype html>
+<title>{% block title %}{% endblock %} - LibraryApp</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1>LibraryApp</h1>
+  <ul>
+    {% if session.name %}
+      <li><span>{{ session.username['username'] or session.is_admin['is_admin'] or session.husername['husername']}}</span>
+      <li><a href="{{ url_for('logout') }}">Log Out</a>
+      <li><a href="{{ url_for('change_password') }}">Change Password</a>
+    {% else %}
+      <li><a href="{{ url_for('admin_login') }}">Central Admin Log In</a>
+      <li><a href="{{ url_for('handler_login') }}">Handler Log In</a>
+      <li><a href="{{ url_for('register') }}">Register</a>
+      <li><a href="{{ url_for('login') }}">Log In</a>
+    {% endif %}
+  </ul>
+</nav>
+<section class="content">
+  <header>
+    {% block header %}{% endblock %}
+  </header>
+  {% for message in get_flashed_messages() %}
+    <div class="flash">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</section>

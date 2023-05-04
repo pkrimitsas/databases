@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Reviews{% endblock %}</h1>
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for review in reviews %}
+    <article class="Reviews">
+      <header>
+        <div>
+            <div class="about">User : {{ review['username'] }} wrote the following :</div>
+            <div class="about">{{ review['opinion'] }}</div>
+        </div>
+        {% if review['is_approved'] == None or review['is_approved'] == 'F' %}
+            <form action="{{ url_for('ractivate', review_id=review['review_id']) }}" method="post">
+                <input type="submit" value="Approve to publish" onclick="return confirm('Are you sure?');">
+            </form>
+        {% else %}
+            <form action="{{ url_for('rdeactivate', review_id=review['review_id']) }}" method="post">
+                <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
+            </form>
+        {% endif %}
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

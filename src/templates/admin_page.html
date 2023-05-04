@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Handlers{% endblock %}</h1>
+  {% if session.is_admin %}
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for handler in handlers %}
+    <article class="Handlers">
+      <header>
+        <div>
+          <h1>{{ handler['handler_name'] }}  {{ handler['handler_surname'] }}</h1>
+          {% if handler['handler_activated'] == None or handler['handler_activated'] == 'F'%}
+            <div class="about">username: {{ handler['handler_username'] }} password: {{ handler['handler_password'] }} and account is not activated.</div>
+          {% else %}
+            <div class="about">username: {{ handler['handler_username'] }} password: {{ handler['handler_password'] }} and account is activated.</div>
+          {% endif %}
+        </div>
+        {% if handler['handler_activated'] == None or handler['handler_activated'] == 'F'%}
+            <form action="{{ url_for('hactivate', school_id=handler['school_id']) }}" method="post">
+                <input type="submit" value="Activate" onclick="return confirm('Are you sure?');">
+            </form>
+        {% else %}
+            <form action="{{ url_for('hdeactivate', school_id=handler['school_id']) }}" method="post">
+                <input class="danger" type="submit" value="Deactivate" onclick="return confirm('Are you sure?');">
+            </form>
+        {% endif %}
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
