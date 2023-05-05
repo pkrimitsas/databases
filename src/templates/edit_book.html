@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Edit book{% endblock %}</h1>
+  {% if session.husername %}
+  <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+  <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+  <a class="action" href="{{ url_for('books') }}">View books</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+    <article class="Book Info">
+      <header>
+        <div>
+            <h1>{{ book['title'] }}</h1>
+            <div class="about"><img src="{{ book['picture'] }}" /></div>
+            <div class="about">Author : {{ book['author'] }}</div>
+            <div class="about">Publisher : {{ book['publisher'] }}</div>
+            <div class="about">ISBN : {{ book['ISBN'] }}</div>
+            <div class="about">Pages : {{ book['pages'] }}</div>
+            <div class="about">Summary : {{ book['summary'] }}</div>
+            <div class="about">Theme : {{ book['theme'] }}</div>
+            <div class="about">Language : {{ book['blanguage'] }}</div>
+            <div class="about">Keywords : {{ book['keywords'] }}</div>
+            <div class="about">Total copies : {{ book['copies'] }} in school: {{ book['school_id'] }}</div>
+        </div>
+        <form method="post">
+            <label for="title">Title</label>
+            <input name="title" id="title">
+            <input type="submit" value="Change">
+            <label for="publisher">Publisher</label>
+            <input type="username" name="publisher" id="publisher">
+            <input type="submit" value="Change">
+            <label for="ISBN">ISBN</label>
+            <input type="username" name="ISBN" id="ISBN">
+            <input type="submit" value="Change">
+            <label for="author">Author</label>
+            <input type="username" name="author" id="author">
+            <input type="submit" value="Change">
+            <label for="pages">Pages (must be positive int)</label>
+            <input type="username" name="pages" id="pages">
+            <input type="submit" value="Change">
+            <label for="summary">Summary</label>
+            <input type="username" name="summary" id="summary">
+            <input type="submit" value="Change">
+            <label for="copies">Copies (must be positive int)</label>
+            <input type="username" name="copies" id="copies">
+            <input type="submit" value="Change">
+            <label for="picture">Picture (In string form, base 64 encoding)</label>
+            <input type="username" name="picture" id="picture">
+            <input type="submit" value="Change">
+            <label for="theme">Theme</label>
+            <input type="username" name="theme" id="theme">
+            <input type="submit" value="Change">
+            <label for="language">Language</label>
+            <input type="username" name="language" id="language">
+            <input type="submit" value="Change">
+            <label for="keywords">Keywords</label>
+            <input type="username" name="keywords" id="keywords">
+            <input type="submit" value="Change">
+          </form>
+      </header>
+    </article>
+{% endblock %}

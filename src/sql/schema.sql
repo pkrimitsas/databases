@@ -51,7 +51,7 @@ create table user (
         username varchar(50) not null,
         pass varchar(50) not null,
         is_active char(1),
-        is_student char(1),
+        is_student char(1) not null,
         primary key (person_id),
     constraint ck_username unique(username),
     constraint ck_is_active check (is_active in ('T', 'F')),
@@ -59,7 +59,7 @@ create table user (
     constraint fk_person_id foreign key (person_id) references person (person_id) on delete cascade on update cascade    
 );
 
--- book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, theme, blanguage, keywords, currently_available)
+-- book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, theme, blanguage, keywords)
 create table book (
         school_id int unsigned not null,
         title varchar(200) not null,
@@ -74,6 +74,8 @@ create table book (
         blanguage varchar(50) not null,
         keywords text not null,
         primary key (ISBN),
+    constraint ck_copies check (copies > 0),
+    constraint ck_pages check (pages > 0),
     constraint fk_book_school_id foreign key (school_id) references school (school_id) on delete cascade on update cascade
 );
 
@@ -88,4 +90,38 @@ create table review (
     constraint ck_is_approved check (is_approved in ('T', 'F')),
     constraint fk_review_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
     constraint fk_review_username foreign key (username) references user (username) on delete cascade on update cascade    
+);
+
+
+-- currently_available(ISBN, current)
+create table currently_available (
+        ISBN varchar(15) not null,
+        current int unsigned not null,
+        primary key (ISBN),
+    constraint ck_curr check (current > 0),
+    constraint fk_curr_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade
+);
+
+create table reservations (
+        reservation_id int unsigned not null auto_increment,
+        ISBN varchar(15) not null,
+        tdate timestamp not null,
+        username varchar(50) not null,
+        rdate timestamp not null,
+        primary key (reservation_id),
+    constraint fk_reserv_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
+    constraint fk_user_reserv foreign key (username) references user (username) on delete cascade on update cascade
+);
+
+create table now_borrowed (
+        transaction_id int unsigned not null auto_increment,
+        ISBN varchar(15) not null,
+        username varchar(50) not null,
+        start_d timestamp not null,
+        is_returned char(1),
+        return_date timestamp not null,
+        primary key (transaction_id),
+    constraint fk_ISBN_now foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
+    constraint fk_user_now foreign key (username) references user (username) on delete cascade on update cascade,
+    constraint ck_bool check (is_returned in ('T', 'F'))
 );

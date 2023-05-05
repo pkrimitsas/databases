@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}My profile{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+    <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
+    <a class="action" href="{{ url_for('books') }}">View all books</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+    <article class="User Info">
+      <header>
+        <div>
+            <div class="about">Person Id : {{ person['person_id'] }}</div>
+            <div class="about">In school with id : {{ person['school_id'] }}</div>
+            <div class="about">First Name : {{ person['first_name'] }}</div>
+            <div class="about">Last Name : {{ person['last_name'] }}</div>
+            <div class="about">Sex : {{ person['sex'] }}</div>
+            <div class="about">Username : {{ user['username'] }}</div>
+            <div class="about">Password : {{ user['pass'] }}</div>
+            {% if user['is_student'] == 'T'%}
+                <div class="about">This user is a student.</div>
+            {% else %}
+                <div class="about">This user is a teacher.</div>
+            {% endif %}
+        </div>
+        {% if user['is_student'] == 'F' %}
+        <form method="post">
+            <label for="first_name">First Name</label>
+            <input name="first_name" id="first_name">
+            <input type="submit" value="Change">
+            <label for="last_name">Last Name</label>
+            <input type="username" name="last_name" id="last_name">
+            <input type="submit" value="Change">
+            <label for="sex">Sex</label>
+            <input type="username" name="sex" id="sex">
+            <input type="submit" value="Change">
+            <label for="username1">Username</label>
+            <input type="username" name="username1" id="username1">
+            <input type="submit" value="Change">
+          </form>
+        {% endif %}
+      </header>
+    </article>
+{% endblock %}

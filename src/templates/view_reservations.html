@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}My Reservations{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
+    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
+    <a class="action" href="{{ url_for('books') }}">View books</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for reservation in reservations %}
+    <article class="Reservations">
+      <header>
+        <div>
+            <div class="about">Reservation with id {{ reservation['reservation_id'] }}</div>
+            <div class="about">make for book with ISBN {{ reservation['ISBN'] }}</div>
+            <div class="about">on date {{ reservation['tdate'] }}</div>
+            <div class="about">by user {{ reservation['username'] }}</div>
+        </div>
+        <form action="{{ url_for('rdelete', reservation_id=reservation['reservation_id']) }}" method="post">
+            <input class="danger" type="submit" value="Delete my reservation" onclick="return confirm('Are you sure?');">
+        </form>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Add Books{% endblock %}</h1>
+  {% if session.username %}
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <a class="action" href="{{ url_for('books') }}">Go to main book page</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="post">
+    <label for="school_id">School Id (must be a valid id from a school)</label>
+    <input name="school_id" id="school_id" required>
+    <label for="title">Title</label>
+    <input name="title" id="title" required>
+    <label for="publisher">Publisher</label>
+    <input type="username" name="publisher" id="publisher" required>
+    <label for="ISBN">ISBN</label>
+    <input type="username" name="ISBN" id="ISBN" required>
+    <label for="author">Author</label>
+    <input type="username" name="author" id="author" required>
+    <label for="pages">Pages (must be positive int)</label>
+    <input type="username" name="pages" id="pages" required>
+    <label for="summary">Summary</label>
+    <input type="username" name="summary" id="summary" required>
+    <label for="copies">Copies (must be positive int)</label>
+    <input type="username" name="copies" id="copies" required>
+    <label for="picture">Picture (In string form, base 64 encoding)</label>
+    <input type="username" name="picture" id="picture" required>
+    <label for="theme">Theme</label>
+    <input type="username" name="theme" id="theme" required>
+    <label for="language">Language</label>
+    <input type="username" name="language" id="language" required>
+    <label for="keywords">Keywords</label>
+    <input type="username" name="keywords" id="keywords" required>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

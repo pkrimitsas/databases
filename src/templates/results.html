@@ -7,10 +7,11 @@
     <a class="action" href="{{ url_for('logout') }}">Log Out</a>
     <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
     <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
-    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
   {% endif %}
   {% if session.husername %}
     <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
+    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
     <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
     <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
   {% endif %}
@@ -50,9 +51,8 @@
           <a class="action" href="{{ url_for('view_reviews', ISBN=book['ISBN']) }}">View and Edit Reviews</a>
         {% else %}
           <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
-          <form action="{{ url_for('make_reservation', ISBN=book['ISBN']) }}" method="post">
+          <form action="{{ url_for('make_reservation', ISBN = book['ISBN']) }}" method="post">
             <input type="submit" value="Make reservation">
-        </form>
         {% endif %}
       </header>
     </article>

@@ -3,7 +3,6 @@
 {% block header %}
   <h1>{% block title %}Users{% endblock %}</h1>
   {% if session.husername %}
-    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
     <a class="action" href="{{ url_for('books') }}">View books</a>
   {% endif %}
 {% endblock %}
