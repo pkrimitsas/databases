@@ -1,3 +1,5 @@
 test.py
 test2.py
 src/__pycache__
+src.egg-info/
+__pycache__/
