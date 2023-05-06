@@ -3,9 +3,7 @@
 {% block header %}
   <h1>{% block title %}Reviews{% endblock %}</h1>
   {% if session.husername %}
-    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
-    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
-    <a class="action" href="{{ url_for('books') }}">View books</a>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
 {% endblock %}
 

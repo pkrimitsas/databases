@@ -1,6 +1,6 @@
 html {
     font-family: sans-serif;
-    background: #eee;
+    background: #d3d28e;
     padding: 1rem;
   }
   
@@ -12,12 +12,12 @@ html {
   
   h1, h2, h3, h4, h5, h6 {
     font-family: serif;
-    color: #377ba8;
+    color: #b33f11;
     margin: 1rem 0;
   }
   
   a {
-    color: #377ba8;
+    color: #0d1318;
   }
   
   hr {
@@ -51,11 +51,11 @@ html {
   
   nav ul li a, nav ul li span, header .action {
     display: block;
-    padding: 0.5rem;
+    padding: 0.7rem;
   }
   
   .content {
-    padding: 0 1rem 1rem;
+    padding: 0 1rem 2rem;
   }
   
   .content > header {

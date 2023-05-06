@@ -3,21 +3,16 @@
 {% block header %}
   <h1>{% block title %}My Reservations{% endblock %}</h1>
   {% if session.username and not session.husername %}
-    <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
-    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
-    <a class="action" href="{{ url_for('books') }}">View books</a>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
   {% if session.husername %}
-    <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
-    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
 {% endblock %}
 
 {% block content %}
   {% for reservation in reservations %}
-    {% if reservation['is_active'] == 'T' %}
+    {% if reservation['is_over'] == 'F' %}
       <article class="Reservations">
         <header>
           <div>
@@ -26,9 +21,14 @@
               <div class="about">on date {{ reservation['tdate'] }}</div>
               <div class="about">until date {{ reservation['rdate'] }}</div>
               <div class="about">by user {{ reservation['username'] }}</div>
+              {% if reservation['is_active'] == 'T' %}
+                <div class="about">and reservation is currently active.</div>
+              {% else %}
+                <div class="about">and reservation is currently inactive.</div>
+              {% endif %}
           </div>
           <form action="{{ url_for('rdelete', reservation_id=reservation['reservation_id']) }}" method="post">
-              <input class="danger" type="submit" value="Delete my reservation" onclick="return confirm('Are you sure?');">
+              <input class="danger" type="submit" value="Cancel my reservation" onclick="return confirm('Are you sure?');">
           </form>
         </header>
       </article>

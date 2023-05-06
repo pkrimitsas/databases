@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Books{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if session.username and not session.husername %}
+    <p></p>
+    <div><a class="action" href="{{ url_for('search') }}">Search for book</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a></div>
+    <p></p>
+    <a class="action" href="{{ url_for('books') }}">Go to main book page</a>
+    <p></p>
+    <div><a class="action" href="{{ url_for('view_reservations') }}">View reservations</a></div>
+  {% endif %}
+  {% if session.husername %}
+    <p></p>
+    <a class="action" href="{{ url_for('view_borrowings') }}">View active borrowings</a>
+    <p></p>
+    <a class="action" href="{{ url_for('books') }}">Go to main book page</a>
+    <p></p>
+    <a class="action" href="{{ url_for('register_return') }}">Register a return</a>
+    <p></p>
+    <a class="action" href="{{ url_for('register_borrow') }}">Register a borrowing</a>
+    <p></p>
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <p></p>
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <p></p>
+    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+    <p></p>
+    <a class="action" href="{{ url_for('search_user') }}">Search user</a>
+  {% endif %}
+{% endblock %}

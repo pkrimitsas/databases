@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}User results{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+    <article class="User Info">
+      <header>
+        <div>
+            <h1>{{ info['username'] }}</h1>
+            <div class="about">Password : {{ info['pass'] }}</div>
+            {% if info['is_student'] == 'T' %}
+                <div class="about">Is a student</div>
+            {% else %}
+                <div class="about">Is a teacher</div>
+            {% endif %}
+            {% for borrowing in borrowings %}
+                {% if borrowing['is_returned'] == 'F' %}
+                    <h1>Active borrowing with ID : {{ borrowing['transaction_id'] }}</h1>
+                    <div class="about">About book: {{ borrowing['ISBN'] }}</div>
+                    <div class="about">Made on: {{ borrowing['start_d'] }}</div>
+                    <div class="about">Date to return: {{ borrowing['return_date'] }}</div>
+                    <form action="{{ url_for('make_return', transaction_id=borrowing['transaction_id']) }}" method="post">
+                        <input type="submit" value="Register the return">
+                    </form>
+                {% endif %}
+            {% endfor %}
+            {% for reservation in reservations %}
+                {% if reservation['is_over'] == 'F' %}
+                    <h1>Reservation with ID: {{ reservation['reservation_id'] }}</h1>
+                    <div class="about">About book: {{ reservation['ISBN'] }}</div>
+                    <div class="about">Made on: {{ reservation['tdate'] }}</div>
+                    {% if reservation['is_active'] == 'T' %}
+                        <div class="about">This reservation is active.</div>
+                        <div class="about">Valid until: {{ reservation['rdate'] }}</div>
+                        <form action="{{ url_for('make_borrow', reservation_id=reservation['reservation_id']) }}" method="post">
+                            <input type="submit" value="Register the borrowing">
+                        </form>
+                    {% else %} 
+                    <div class="about">This reservation is inactive.</div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </div>
+      </header>
+    </article>
+{% endblock %}

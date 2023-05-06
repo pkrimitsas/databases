@@ -108,9 +108,11 @@ create table reservations (
         tdate timestamp not null,
         username varchar(50) not null,
         rdate timestamp not null,
-        is_active char(1),
+        is_active char(1) not null,
+        is_over char(1) not null,
         primary key (reservation_id),
     constraint ck_is_active_res check (is_active in ('T', 'F')),
+    constraint ck_is_over_res check (is_over in ('T', 'F')),
     constraint fk_reserv_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
     constraint fk_user_reserv foreign key (username) references user (username) on delete cascade on update cascade
 );

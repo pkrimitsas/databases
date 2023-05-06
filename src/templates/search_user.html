@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Register Borrow{% endblock %}</h1>
+  <h1>{% block title %}Search for a book{% endblock %}</h1>
   {% if session.username and not session.husername %}
   <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
@@ -13,9 +13,6 @@
 {% block content %}
   <form method="post">
     <label for="user">Username</label>
-    <input name="user" id="user" required>
-    <label for="ISBN">ISBN</label>
-    <input name="ISBN" id="ISBN" required>
-    <input type="submit" value="Register the borrowing of this book.">
+    <input name="user" id="user">
   </form>
 {% endblock %}

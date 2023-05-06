@@ -2,9 +2,6 @@
 
 {% block header %}
   <h1>{% block title %}Handlers{% endblock %}</h1>
-  {% if session.is_admin %}
-    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
-  {% endif %}
 {% endblock %}
 
 {% block content %}

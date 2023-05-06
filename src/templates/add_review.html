@@ -3,8 +3,7 @@
 {% block header %}
   <h1>{% block title %}Add review{% endblock %}</h1>
   {% if session.username %}
-    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
-    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
 {% endblock %}
 

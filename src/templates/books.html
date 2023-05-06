@@ -3,15 +3,10 @@
 {% block header %}
   <h1>{% block title %}Books{% endblock %}</h1>
   {% if session.username and not session.husername %}
-    <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
-    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
   {% if session.husername %}
-    <a class="action" href="{{ url_for('register_borrow') }}">Register a borrowing</a>
-    <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
-    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
 {% endblock %}
 
@@ -21,7 +16,7 @@
       <header>
         <div>
           <h1>{{ book['title'] }}</h1>
-          <div class="about"><img src="{{ book['picture'] }}" /></div>
+          <div class="about"><img src="{{ book['picture'] }}" style="width:142px;height:142px;"/></div>
           <div class="about">Author : {{ book['author'] }}</div>
           <div class="about">Publisher : {{ book['publisher'] }}</div>
           <div class="about">ISBN : {{ book['ISBN'] }}</div>
@@ -52,11 +47,9 @@
           <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
           {% for curr in current %}
             {% if curr['ISBN'] == book['ISBN'] %}
-              {% if curr['current'] == 0 %}
                 <form action="{{ url_for('make_reservation', ISBN=book['ISBN']) }}" method="post">
-                  <input type="submit" value="Borrow/Make reservation">
+                  <input type="submit" value="Make reservation">
                 </form>
-              {% endif %}
             {% endif %}
           {% endfor %}
         {% endif %}
