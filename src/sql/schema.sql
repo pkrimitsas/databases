@@ -98,7 +98,7 @@ create table currently_available (
         ISBN varchar(15) not null,
         current int unsigned not null,
         primary key (ISBN),
-    constraint ck_curr check (current > 0),
+    constraint ck_curr check (current >= 0),
     constraint fk_curr_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade
 );
 
@@ -108,7 +108,9 @@ create table reservations (
         tdate timestamp not null,
         username varchar(50) not null,
         rdate timestamp not null,
+        is_active char(1),
         primary key (reservation_id),
+    constraint ck_is_active_res check (is_active in ('T', 'F')),
     constraint fk_reserv_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
     constraint fk_user_reserv foreign key (username) references user (username) on delete cascade on update cascade
 );

@@ -17,19 +17,22 @@
 
 {% block content %}
   {% for reservation in reservations %}
-    <article class="Reservations">
-      <header>
-        <div>
-            <div class="about">Reservation with id {{ reservation['reservation_id'] }}</div>
-            <div class="about">make for book with ISBN {{ reservation['ISBN'] }}</div>
-            <div class="about">on date {{ reservation['tdate'] }}</div>
-            <div class="about">by user {{ reservation['username'] }}</div>
-        </div>
-        <form action="{{ url_for('rdelete', reservation_id=reservation['reservation_id']) }}" method="post">
-            <input class="danger" type="submit" value="Delete my reservation" onclick="return confirm('Are you sure?');">
-        </form>
-      </header>
-    </article>
+    {% if reservation['is_active'] == 'T' %}
+      <article class="Reservations">
+        <header>
+          <div>
+              <div class="about">Reservation with id {{ reservation['reservation_id'] }}</div>
+              <div class="about">make for book with ISBN {{ reservation['ISBN'] }}</div>
+              <div class="about">on date {{ reservation['tdate'] }}</div>
+              <div class="about">until date {{ reservation['rdate'] }}</div>
+              <div class="about">by user {{ reservation['username'] }}</div>
+          </div>
+          <form action="{{ url_for('rdelete', reservation_id=reservation['reservation_id']) }}" method="post">
+              <input class="danger" type="submit" value="Delete my reservation" onclick="return confirm('Are you sure?');">
+          </form>
+        </header>
+      </article>
+    {% endif %}
     {% if not loop.last %}
       <hr>
     {% endif %}

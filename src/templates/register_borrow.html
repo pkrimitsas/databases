@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Register Borrow{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
+    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('books') }}">Main book page</a>
+    <a class="action" href="{{ url_for('search') }}">Search for book</a>
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="user">Username</label>
+    <input name="user" id="user" required>
+    <label for="ISBN">ISBN</label>
+    <input name="ISBN" id="ISBN" required>
+    <input type="submit" value="Register the borrowing of this book.">
+  </form>
+{% endblock %}

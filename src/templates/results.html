@@ -4,14 +4,12 @@
   <h1>{% block title %}Books{% endblock %}</h1>
   {% if session.username and not session.husername %}
     <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
-    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
     <a class="action" href="{{ url_for('my_profile', person_id=session['person_id']) }}">My profile</a>
+    <a class="action" href="{{ url_for('view_reservations') }}">View reservations</a>
   {% endif %}
   {% if session.husername %}
+    <a class="action" href="{{ url_for('register_borrow') }}">Register a borrowing</a>
     <a class="action" href="{{ url_for('search') }}">Search for book</a>
-    <a class="action" href="{{ url_for('logout') }}">Log Out</a>
-    <a class="action" href="{{ url_for('change_password') }}">Change Password</a>
     <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
     <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
   {% endif %}
@@ -49,10 +47,18 @@
         {% if session.husername %}
           <a class="action" href="{{ url_for('edit_book', ISBN=book['ISBN']) }}">View and Edit book information</a>
           <a class="action" href="{{ url_for('view_reviews', ISBN=book['ISBN']) }}">View and Edit Reviews</a>
+          <a class="action" href="{{ url_for('vreservations', ISBN=book['ISBN']) }}">View reservations about this book</a>
         {% else %}
           <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
-          <form action="{{ url_for('make_reservation', ISBN = book['ISBN']) }}" method="post">
-            <input type="submit" value="Make reservation">
+          {% for curr in current %}
+            {% if curr['ISBN'] == book['ISBN'] %}
+              {% if curr['current'] == 0 %}
+                <form action="{{ url_for('make_reservation', ISBN=book['ISBN']) }}" method="post">
+                  <input type="submit" value="Borrow/Make reservation">
+                </form>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
         {% endif %}
       </header>
     </article>

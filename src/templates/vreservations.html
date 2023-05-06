@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Current reservations{% endblock %}</h1>
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('handler_page') }}">Handle User Accounts</a>
+    <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
+    <a class="action" href="{{ url_for('books') }}">View books</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for reservation in reservations %}
+    {% if reservation['is_active'] == 'T' %}
+        <article class="Reviews">
+        <header>
+            <div>
+                <div class="about">User : {{ reservation['username'] }}</div>
+                <div class="about">On date : {{ reservation['tdate'] }}</div>
+                <div class="about">Until date : {{ reservation['rdate'] }}</div>
+            </div>
+            <form action="{{ url_for('make_borrow', reservation_id=reservation['reservation_id']) }}" method="post">
+                <input type="submit" value="Approve to borrow" onclick="return confirm('Are you sure?');">
+            </form>        
+        </header>
+        </article>
+    {% endif %}
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

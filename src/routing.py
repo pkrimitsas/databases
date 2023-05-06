@@ -4,6 +4,32 @@ from src import app, db
 import functools
 import datetime
 
+def update_table():
+    query = "SELECT * FROM currently_available;"
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query)
+    current = cur.fetchall()
+    cur.close()
+    for x in current:
+        ISBN = x['ISBN']
+        copies = x['current']
+        query = "SELECT * FROM now_borrowed WHERE ISBN = %s AND is_returned = 'F';"
+        cur = db.cursor(buffered=True, dictionary=True)
+        args = (ISBN,)
+        cur.execute(query, args)
+        res = cur.fetchall()
+        cur.close()
+        diff = copies - len(res)
+        query = "UPDATE currently_available SET current = %s WHERE ISBN = %s;"
+        args = (diff, ISBN)
+        curr = db.cursor()
+        curr.execute(query, args)
+    
+    db.commit()
+    curr.close()
+
+
+
 def clear_session():
     session["is_admin"] = None
     session["username"] = None
@@ -662,24 +688,7 @@ def search():
 @login_required
 def make_reservation(ISBN):
     if request.method == 'POST':
-        query = "SELECT * FROM now_borrowed WHERE ISBN = %s;"
-        args = (ISBN,)
-        cur = db.cursor(buffered=True, dictionary=True)
-        cur.execute(query, args)
-        res = cur.fetchall()
-        cur.close()
-        query = "SELECT copies FROM book WHERE ISBN = %s;"
-        args = (ISBN,)
-        cur = db.cursor(buffered=True, dictionary=True)
-        cur.execute(query, args)
-        res2 = cur.fetchone()
-        cur.close()
-        curr = len(res)
-        if curr == res2['copies']:
-            # also handle when the reservation can be made
-            flash("Your reservation cannot be made at this time.")
-            return redirect(url_for('books'))
-        username = session['username']
+        # find reservation_id of last and add one to find current reservation_id
         query = "SELECT reservation_id FROM reservations ORDER BY reservation_id DESC LIMIT 1;"
         cur = db.cursor()
         cur.execute(query)
@@ -689,51 +698,54 @@ def make_reservation(ISBN):
             id = 1
         else:
             id = res[0] + 1
+
+        # check that the user is eligible to make the reservation
+        username = session['username']
+        query = "SELECT * FROM reservations WHERE username = %s;"
+        args = (username,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchall()
+        reserv = len(res)
+
         query = "SELECT is_student FROM user WHERE username = %s;"
         args = (username,)
-        cur = db.cursor()
+        cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
-        res = cur.fetchone()
-        cur.close()
-        is_student = res[0]
-        query = "SELECT reservation_id FROM reservations WHERE username = %s;"
+        is_student = cur.fetchall()
+
+        if is_student[0] == 'T' and reserv == 2:
+            flash("You cannot make more reservations this week.")
+            return redirect(url_for('show_reservations'))
+        if is_student[0] == 'F' and reserv == 1:
+            flash("You cannot make more reservations this week.")
+            return redirect(url_for('show_reservations'))
+        
+        query = "SELECT * FROM now_borrowed WHERE username = %s;"
         args = (username,)
-        cur = db.cursor()
+        cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
-        res3 = cur.fetchall()
-        cur.close()
-        if is_student == 'T' and len(res3) == 2:
-            flash("You cannot make more reservations this week.")
-            return redirect(url_for('view_reservations'))
-        if is_student == 'F' and len(res3) == 1:
-            flash("You cannot make more reservations this week.")
-            return redirect(url_for('view_reservations'))
-        query = "SELECT transaction_id FROM now_borrowed ORDER BY transaction_id DESC LIMIT 1;"
-        cur = db.cursor()
-        cur.execute(query)
-        res = cur.fetchone()
-        cur.close()
-        if res is None:
-            id2 = 1
-        else :
-            id2 = res[0] + 1
-        ct = datetime.datetime.now()
-        rdate = ct + datetime.timedelta(days=7)
-        query = 'INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date) VALUES (%s, %s, %s, %s, %s, %s);'
-        args = (id2, ISBN, username, ct, 'F', rdate)
+        res = cur.fetchall()
+        current_time = datetime.datetime.now().replace(microsecond=0)
+        for x in res:
+            if x['return_date'] < current_time:
+                flash("You have pending books to return, cannot make reservation.")
+                return redirect(url_for('books'))
+            if x['ISBN'] == ISBN:
+                flash("Cannot make reservation for a book you have currently borrowed.")
+                return redirect(url_for('books'))
+
+        # make the reservation
+        query = "INSERT INTO reservations(reservation_id, ISBN, tdate, username, rdate, is_active) VALUES (%s, %s, %s, %s, %s, 'T');"
+        tdate = datetime.datetime.now().replace(microsecond=0)
+        rdate =  tdate + datetime.timedelta(days=7)
+        args = (id, ISBN, tdate, username, rdate)
         cur = db.cursor()
         cur.execute(query, args)
         db.commit()
         cur.close()
-        query = 'INSERT INTO reservations(reservation_id, ISBN, tdate, username, rdate) VALUES (%s, %s, %s, %s, %s);'
-        ct = datetime.datetime.now()
-        rdate = ct + datetime.timedelta(days=7)
-        args = (id, ISBN, ct, username, rdate)
-        cur = db.cursor()
-        cur.execute(query, args)
-        db.commit()
-        cur.close()
-        flash("Your reservation was made successfully, and the borrowing is registered.")
+
+        flash("Your reservation was made successfully.")
         return redirect(url_for('books'))
     
 
@@ -764,3 +776,121 @@ def rdelete(reservation_id):
         flash("Reservation was deleted successfully.")
         return redirect(url_for('view_reservations'))
     return render_template('books.html')
+
+@app.route("/<string:ISBN>/vreservations")
+@handler_required
+def vreservations(ISBN):
+    query = "SELECT * FROM reservations WHERE ISBN = %s;"
+    args = (ISBN,)
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query, args)
+    reservations = cur.fetchall()
+    cur.close()
+    return render_template('vreservations.html', reservations=reservations)
+
+@app.route("/<int:reservation_id>/make_borrow", methods=('POST', 'GET'))
+@handler_required
+def make_borrow(reservation_id):
+    if request.method == 'POST':
+        query = "SELECT * FROM reservation WHERE reservation_id = %s;"
+        args = (reservation_id,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchall()
+        cur.close()
+
+        # find transaction id in borrow table
+        query = "SELECT transaction_id FROM now_borrowed ORDER BY transaction_id DESC LIMIT 1;"
+        cur = db.cursor()
+        cur.execute(query)
+        x = cur.fetchone()
+        if x is None:
+            id = 1
+        else:
+            id = x[0] + 1
+        username = session['username']
+        tdate = datetime.datetime.now().replace(microsecond=0)
+        rdate =  tdate + datetime.timedelta(days=7)
+        ISBN = res['ISBN']
+        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date) VALUES (%s, %s, %s, %s, 'F', %s);"
+        args = (id, ISBN, username, tdate, rdate)
+        cur = db.cursor()
+        cur.execute(query, args)
+        db.commit()
+        cur.close()
+
+        update_table()
+
+        flash("Borrowing was successfully registered.")
+        return redirect(url_for('books'))
+    
+    return redirect(url_for('books'))
+
+@app.route("/register_borrow", methods=('GET', 'POST'))
+@handler_required
+def register_borrow():
+    if request.method == 'POST':
+        ISBN =  request.form['ISBN']
+        username = request.form['user']
+
+        # check that the user is eligible for the borrowing
+        query = "SELECT * FROM now_borrowed WHERE username = %s;"
+        args = (username,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchall()
+        reserv = len(res)
+
+        query = "SELECT is_student FROM user WHERE username = %s;"
+        args = (username,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        is_student = cur.fetchone()
+
+        if is_student['is_student'] == 'T' and reserv == 2:
+            flash("This user has already borrowed 2 books this week.")
+            return redirect(url_for('show_reservations'))
+        if is_student['is_student'] == 'F' and reserv == 1:
+            flash("This teacher has already borrwed 1 book this week.")
+            return redirect(url_for('show_reservations'))
+        
+        query = "SELECT * FROM now_borrowed WHERE username = %s;"
+        args = (username,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchall()
+        current_time = datetime.datetime.now().replace(microsecond=0)
+        for x in res:
+            if x['return_date'] < current_time:
+                flash("This user has pending books to return.")
+                return redirect(url_for('books'))
+            if x['ISBN'] == ISBN:
+                flash("This user has already borrowed this book.")
+                return redirect(url_for('books'))
+            
+        # find transaction id in borrow table
+        query = "SELECT transaction_id FROM now_borrowed ORDER BY transaction_id DESC LIMIT 1;"
+        cur = db.cursor()
+        cur.execute(query)
+        x = cur.fetchone()
+        if x is None:
+            id = 1
+        else:
+            id = x[0] + 1
+
+        # make the borrowing
+        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date) VALUES (%s, %s, %s, %s, 'F', %s);"
+        tdate = datetime.datetime.now().replace(microsecond=0)
+        rdate =  tdate + datetime.timedelta(days=7)
+        args = (id, ISBN, username, tdate, rdate)
+        cur = db.cursor()
+        cur.execute(query, args)
+        db.commit()
+        cur.close()
+
+        update_table()
+
+        flash("Successfully registered the borrowing.")
+        return redirect(url_for('books'))
+    
+    return render_template('register_borrow.html')
