@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Book borrowings per school{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+  {% for borrowing in borrowings %}
+    <article class="Books">
+      <header>
+        <div>
+          <h1>School with ID: {{ borrowing['school_id'] }}</h1>
+          <div class="about">For book with ISBN : {{ borrowing['ISBN'] }} by user: {{ borrowing['username'] }}</div>
+          <div class="about">Book was borrowed on timestamp : {{ borrowing['start_d'] }}</div>
+          <div class="about">Borrowing's transaction id : {{ borrowing['transaction_id'] }}</div>
+          {% if borrowing['is_returned'] == 'T' %}
+            <div class="about">Book was returned on : {{ borrowing['return_date'] }}</div>
+          {% else %} 
+            <div class="about">Book is not yet returned.</div>
+          {% endif %}
+          <p></p>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Search for overdue returns{% endblock %}</h1>
+  <h1>{% block title %}Search for overdue returns (one or more field can be empty){% endblock %}</h1>
   {% if session.username and not session.husername %}
   <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
@@ -14,10 +14,8 @@
   <form method="post">
     <label for="name">Name</label>
     <input name="name" id="name">
-    <input type="submit" value="Search">
     <label for="lastname">Last Name</label>
     <input name="lastname" id="lastname">
-    <input type="submit" value="Search">
     <label for="days">Days that return is late</label>
     <input name="days" id="days">
     <input type="submit" value="Search">

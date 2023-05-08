@@ -24,7 +24,6 @@
           <div class="about">ISBN : {{ book['ISBN'] }}</div>
           <div class="about">Pages : {{ book['pages'] }}</div>
           <div class="about">Summary : {{ book['summary'] }}</div>
-          <div class="about">Theme : {{ book['theme'] }}</div>
           <div class="about">Language : {{ book['blanguage'] }}</div>
           <div class="about">Keywords : {{ book['keywords'] }}</div>
           <div class="about">Total copies : {{ book['copies'] }} in school: {{ book['school_name'] }}</div>
@@ -33,10 +32,27 @@
                 <div class="about">Currently available are : {{ curr['current'] }}</div>
             {% endif %}
           {% endfor %}
+          {% for theme in themes %}
+            {% if theme['ISBN'] == book['ISBN'] %}
+                <div class="about">Theme : {{ theme['theme_name'] }}</div>
+            {% endif %}
+          {% endfor %}
+          <p></p>
           {% for review in reviews %}
             {% if review['ISBN'] == book['ISBN'] %}
               {% if review['is_approved'] == 'T' %}
-                <div class="about">User : {{ review['username'] }}, wrote: {{ review['opinion'] }}</div>
+                {% if review['scale'] == 1 %}
+                <div class="about">User : {{ review['username'] }}, strongly disliked the book and wrote: {{ review['opinion'] }}</div>
+                {% elif review['scale'] == 2 %} 
+                <div class="about">User : {{ review['username'] }}, disliked the book and wrote: {{ review['opinion'] }}</div>
+                {% elif review['scale'] == 3 %} 
+                <div class="about">User : {{ review['username'] }}, was unsure about the book and wrote: {{ review['opinion'] }}</div>
+                {% elif review['scale'] == 4 %} 
+                <div class="about">User : {{ review['username'] }}, liked the book and wrote: {{ review['opinion'] }}</div>
+                {% elif review['scale'] == 5 %} 
+                <div class="about">User : {{ review['username'] }}, strongly liked the book and wrote: {{ review['opinion'] }}</div>
+                {% endif %}
+                <p></p>
               {% endif %}
             {% endif %}
           {% endfor %}

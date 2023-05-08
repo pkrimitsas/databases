@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Information about {{ theme }}{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+<p></p>
+  <h1>Authors with books in this theme</h1>
+  <header></header>
+  {% for author in authors %}
+    <article class="Authors">
+      <header>
+        <div>
+          <p></p>
+          <div class="about">Author name : {{ author['author'] }}</div>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+  <p></p>
+  <header></header>
+  <h1>Teachers who borrowed books from this theme in the last year</h1>
+  <header></header>
+  {% for person in people %}
+    <article class="Authors">
+      <header>
+        <div>
+          <p></p>
+          <div class="about">Teacher named : {{ person['name'] }} {{ person['lastname'] }}</div>
+          <div class="about">Sex : {{ person['sex'] }} and age : {{ person['age'] }}</div>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

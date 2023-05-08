@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-{% if session.username and not session.husername %}
+{% if session.username and not session.husername and not session.is_admin %}
     <p></p>
     <div><a class="action" href="{{ url_for('search') }}">Search for book</a></div>
     <p></p>
@@ -36,5 +36,24 @@
     <a class="action" href="{{ url_for('search_user') }}">Search user</a>
     <p></p>
     <div><a class="action" href="{{ url_for('overdue_returns') }}">View overdue returns</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('review_average') }}">View user ratings and averages</a></div>
+  {% else %}
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query1') }}">View total borrowings per school</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query2') }}">Authors and borrowings from selected category</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query3') }}">Young teachers with the most borrowings</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query4') }}">Find least popular authors</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query5') }}">Handlers with same number of borrowings and more than 20 in the last year</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query6') }}">Find top 3 pairs of most common themes in borrowings</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_query7') }}">Find authors with less than 5 books written from the author with the most books written</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('admin_page') }}">Handle handler's accounts</a></div>
   {% endif %}
 {% endblock %}

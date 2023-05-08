@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Themes information{% endblock %}</h1>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="theme">Select theme :</label>
+    <select name="theme" id="theme" required>
+      {% for theme in themes %} 
+        <option value="{{ theme['th'] }}">{{ theme['th'] }}</option>
+      {% endfor %}
+    </select>
+    <p></p>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

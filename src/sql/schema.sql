@@ -42,7 +42,9 @@ create table person (
         last_name varchar(50) not null,
         sex varchar(15) not null,
         person_type varchar(50) not null,
+        age int unsigned not null,
         primary key (person_id),
+    constraint ck_age check (age > 0),
     constraint fk_school_id foreign key (school_id) references school (school_id) on delete cascade on update cascade
 );
 
@@ -90,7 +92,9 @@ create table review (
         username varchar(50) not null,
         opinion text not null,
         is_approved char(1),
+        scale int unsigned not null,
         primary key (review_id),
+    constraint ck_scale check (scale > 0 and scale < 6),
     constraint ck_is_approved check (is_approved in ('T', 'F')),
     constraint fk_review_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade,
     constraint fk_review_username foreign key (username) references user (username) on delete cascade on update cascade    

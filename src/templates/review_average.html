@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Search for a book{% endblock %}</h1>
+  <h1>{% block title %}View average ratings (one field can be blank){% endblock %}</h1>
   {% if session.username and not session.husername %}
   <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
   {% endif %}
@@ -12,16 +12,10 @@
 
 {% block content %}
   <form method="post">
-    <label for="title">Title</label>
-    <input name="title" id="title">
-    <label for="theme">Theme</label>
+    <label for="user">Specify User</label>
+    <input name="user" id="user">
+    <label for="theme">Specify Theme</label>
     <input name="theme" id="theme">
-    <label for="author">Author</label>
-    <input name="author" id="author">
-    {% if session.husername %} 
-      <label for="copies">Copies</label>
-      <input name="copies" id="copies">
-    {% endif %}
     <input type="submit" value="Search">
   </form>
 {% endblock %}

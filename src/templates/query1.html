@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Borrowings per month and school{% endblock %}</h1>
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="month">Select month: </label>
+    <select name="month" id="month" required>
+      <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+    <p></p>
+    <label for="year">Select year :</label>
+    <select name="year" id="year" required>
+      {% for year in years %} 
+        <option value="{{ year }}">{{ year }}</option>
+      {% endfor %}
+    </select>
+    <p></p>
+    <label for="school_id">Select school :</label>
+    <select name="school_id" id="school_id" required>
+      {% for school in schools %} 
+        <option value="{{ school['school_id'] }}">{{ school['school_name'] }}</option>
+      {% endfor %}
+        <option value="all">All schools</option>
+    </select>
+    <p></p>
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}

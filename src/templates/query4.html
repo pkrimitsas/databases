@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Authors with no books of theirs borrowed{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+<p></p>
+  {% for author in authors %}
+    <article class="Books">
+      <header>
+        <div>
+          <div class="about">{{ author['author'] }}</div>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

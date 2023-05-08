@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Author with most books is {{ ans['author'] }} and has written {{ ans['max_books'] }} books{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+  {% for author in authors %}
+    <article class="Books">
+      <header>
+        <div>
+          <h1>Author: {{ author['author'] }}</h1>
+          <div class="about">has written : {{ author['books'] }}</div>
+          <p></p>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

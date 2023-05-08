@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Young teachers with borrowed books{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+<p></p>
+<h1>Most borrowed books are {{ num }}</h1>
+<header></header>
+<p></p>
+  {% for person in info %}
+    <article class="Books">
+      <header>
+        <div>
+          <p></p>
+          <div class="about">Teacher named : {{ person['name'] }} {{ person['lastname'] }}</div>
+          <div class="about">Sex : {{ person['sex'] }} and age {{ person['age'] }}</div>
+          <div class="about">Has borrowed : {{ person['number'] }} books in total</div>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

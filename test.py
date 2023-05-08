@@ -33,7 +33,7 @@ for i in range(1, 11):
 
 # create 60 people
 for i in range (1, 51):
-    query = "INSERT INTO person(person_id, school_id, first_name, last_name, sex, person_type) VALUES (%s, %s, %s, %s, %s, %s);"
+    query = "INSERT INTO person(person_id, school_id, first_name, last_name, sex, person_type, age) VALUES (%s, %s, %s, %s, %s, %s, %s);"
     person_id = i
     school_id = random.randrange(1, 11)
     first_name = fake.first_name()
@@ -46,10 +46,12 @@ for i in range (1, 51):
     choice2 = random.randrange(1, 5)
     if choice2 == 1:
         person_type = "teacher"
+        age = random.randrange(25, 65)
     else:
         person_type = "student"
+        age = random.randrange(13, 19)
 
-    args = (person_id, school_id, first_name, last_name, sex, person_type)
+    args = (person_id, school_id, first_name, last_name, sex, person_type, age)
     cur.execute(query, args)
 
 
@@ -64,7 +66,7 @@ for i in range(101):
     publisher = fake.company()
     ISBN = fake.unique.numerify("###-#-##-######-#")
     dict[i] = ISBN
-    author = fake.name()
+    author = fake.first_name()
     pages = random.randrange(100, 1000)
     summary = fake.text()
     copies = random.randrange(1, 10)
@@ -204,6 +206,23 @@ for k in range (1, 26):
     school_id = res['school_id']
     args = (transaction_id, ISBN, username, start_d, is_returned, None, school_id)
     i = i + 1
+    cur.execute(query, args)
+
+# create 30 reviews
+for k in range (1, 31):
+    query = "INSERT INTO review(review_id, ISBN, username, opinion, is_approved, scale) VALUES (0, %s, %s, %s, %s, %s);"
+    choice = random.randrange(1, 101)
+    ISBN = dict[choice]
+    choice = random.randrange(1, 51)
+    username = users[choice]
+    opinion = fake.text()
+    choice = random.randrange(1, 6)
+    if choice > 1:
+        is_approved = 'T'
+    else :
+        is_approved = 'F'
+    choice = random.randrange(1, 6)
+    args = (ISBN, username, opinion, is_approved, choice)
     cur.execute(query, args)
 
 query = "SELECT ISBN, copies FROM book;"

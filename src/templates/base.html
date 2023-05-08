@@ -4,10 +4,13 @@
 <nav>
   <h1>LibraryApp</h1>
   <ul>
-    {% if session.username %}
-      <li><span>{{ session.username or session.is_admin or session.husername }}</span>
+    {% if session.username and not session.is_admin %}
+      <li><span>{{ session.username or session.husername }}</span>
       <li><a href="{{ url_for('logout') }}">Log Out</a>
       <li><a href="{{ url_for('change_password') }}">Change Password</a>
+    {% elif session.is_admin %}
+      <li><span>ADMIN</span>
+      <li><a href="{{ url_for('logout') }}">Log Out</a>
     {% else %}
       <li><a href="{{ url_for('admin_login') }}">Central Admin Log In</a>
       <li><a href="{{ url_for('handler_login') }}">Handler Log In</a>

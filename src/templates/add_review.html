@@ -11,6 +11,15 @@
   <form method="post">
     <label for="text">Type your thoughts about the book</label>
     <input name="text" id="username" required>
+    <label for="rating">Rate the book on the Likert scale: </label>
+    <select name="rating" id="rating" required>
+      <option value="one">Very dissatisfied</option>
+      <option value="two">Dissatisfied</option>
+      <option value="three">Unsure</option>
+      <option value="four">Satisfied</option>
+      <option value="five">Very satisfied</option>
+    </select>
+    <p></p>
     <input type="submit" value="Submit">
   </form>
 {% endblock %}
