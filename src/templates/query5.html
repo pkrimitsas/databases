@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Handlers with same amount of borrowings{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+  {% for p in res %}
+    <article class="Books">
+      <header>
+        <div>
+          <h1>Number of borrowings in last year : {{ p['number'] }}</h1>
+          <div class="about">{{ p['t1n'] }} {{ p['t1l'] }} same with {{ p['t2n'] }} {{ p['t2l'] }}</div>
+          <p></p>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

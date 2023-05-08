@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Top-3 pairs of genres in borrowings{% endblock %}</h1>
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+{% endblock %}
+
+
+
+{% block content %}
+  {% for pair in pairs %}
+    <article class="Books">
+      <header>
+        <div>
+          <h1>Appeared in {{ pair['number'] }} borrowings</h1>
+          <div class="about">{{ pair['t1'] }} - {{ pair['t2'] }}</div>
+          <p></p>
+          <p></p>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

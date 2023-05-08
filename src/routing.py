@@ -2469,14 +2469,163 @@ def admin_query4():
 @admin_required
 def admin_query5():
 
-    flash("Not ready yet")
-    return redirect(url_for('main_page'))
+    # query to find how many borrowings each handler has approved
+    # SELECT s.handler_username, COUNT(borr.transaction_id) AS number FROM school s JOIN now_borrowed borr on s.school_id = borr.school_id 
+    # GROUP BY s.school_id ORDER BY number DESC;
 
-@app.route("/admin_query6", methods=('GET', 'POST'))
+    ctime = datetime.datetime.now() - datetime.timedelta(days=365)
+
+
+    
+    query1 = """SELECT
+                s.school_id, 
+                s.handler_name,
+                s.handler_surname,
+                COUNT(
+                DISTINCT
+                borr.transaction_id
+                )
+                AS
+                number
+                FROM
+                school s
+                JOIN
+                now_borrowed borr
+                ON
+                s.school_id = borr.school_id
+                WHERE
+                borr.start_d > %s
+                GROUP BY
+                s.school_id
+                ORDER BY
+                number
+                DESC
+                """
+   
+    
+    query = """SELECT
+                t1.handler_name
+                AS t1n,
+                t1.handler_surname
+                AS t1l,
+                t2.handler_name
+                AS t2n,
+                t2.handler_surname
+                AS t2l,
+                t1.number 
+                AS number
+                FROM (
+                SELECT
+                s.school_id, 
+                s.handler_name,
+                s.handler_surname,
+                COUNT(
+                DISTINCT
+                borr.transaction_id
+                )
+                AS
+                number
+                FROM
+                school s
+                JOIN
+                now_borrowed borr
+                ON
+                s.school_id = borr.school_id
+                WHERE
+                borr.start_d > %s
+                GROUP BY
+                s.school_id
+                ORDER BY
+                number
+                DESC
+                ) t1,
+                (
+                SELECT
+                s.school_id, 
+                s.handler_name,
+                s.handler_surname,
+                COUNT(
+                DISTINCT
+                borr.transaction_id
+                )
+                AS
+                number
+                FROM
+                school s
+                JOIN
+                now_borrowed borr
+                ON
+                s.school_id = borr.school_id
+                WHERE
+                borr.start_d > %s
+                GROUP BY
+                s.school_id
+                ORDER BY
+                number
+                DESC
+                ) t2
+                WHERE
+                t1.handler_name < t2.handler_name
+                AND
+                t1.number = t2.number
+                AND
+                t1.number > 20;"""
+    
+    args = (ctime, ctime)
+
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query, args)
+
+    res = cur.fetchall()
+    cur.close()
+
+    if len(res) == 0:
+        flash("Either no handler has lended more than 20 books, or no two handlers have lended the same amount of books.")
+
+    return render_template("query5.html", res=res)
+
+@app.route("/admin_query6")
 @admin_required
 def admin_query6():
-    flash("Not ready yet")
-    return redirect(url_for('main_page'))
+
+    query = """SELECT
+                t1.theme_name AS t1,
+                t2.theme_name AS t2,
+                COUNT(
+                borr.transaction_id
+                )
+                AS
+                number
+                FROM
+                theme t1
+                JOIN
+                theme t2
+                ON
+                t1.ISBN = t2.ISBN
+                AND
+                t1.theme_name < t2.theme_name
+                JOIN
+                book b
+                ON 
+                t1.ISBN = b.ISBN
+                JOIN
+                now_borrowed borr
+                ON
+                b.ISBN = borr.ISBN
+                GROUP BY
+                t1.theme_name,
+                t2.theme_name
+                ORDER BY
+                number
+                DESC
+                LIMIT 3;"""
+    
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query)
+    res = cur.fetchall()
+    cur.close()
+
+    return render_template("query6.html", pairs=res)
 
 @app.route("/admin_query7", methods=('GET', 'POST'))
 @admin_required
