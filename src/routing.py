@@ -4,6 +4,24 @@ from src import app, db
 import functools
 import datetime
 
+def update_reservations():
+    query = "SELECT * FROM reservations;"
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query)
+    reservations = cur.fetchall()
+    cur.close()
+    current_time = datetime.datetime.now().replace(microsecond=0)
+    curr = db.cursor()
+    for reservation in reservations:
+        if reservation['rdate'] < current_time:
+            query = "UPDATE reservations SET is_active = 'F', is_over = 'T' WHERE reservation_id = %s;"
+            args = (reservation['reservation_id'])
+            curr.execute(query, args)
+
+    db.commit()
+    curr.close()
+
+
 def update_table():
     query = "SELECT * FROM currently_available;"
     cur = db.cursor(buffered=True, dictionary=True)
@@ -49,6 +67,7 @@ def clear_session():
     session["activated"] = None
     session["husername"] = None
     session["hactivated"] = None
+    session['school_id'] = None
 
 def login_required(view):
     @functools.wraps(view)
@@ -95,6 +114,7 @@ def account_activated(view):
 
 @app.route("/admin_login", methods=('GET', 'POST'))
 def admin_login():
+    update_reservations()
     clear_session()
     if request.method == 'POST':
         if request.form['username'] != 'root' or request.form['password'] != 'admin':
@@ -102,16 +122,19 @@ def admin_login():
             return redirect(url_for('index'))
         else:
             session['is_admin'] = 'T'
+            session['username'] = 't'
             return redirect(url_for('admin_page'))
         
     return render_template('admin_login.html')
 
 @app.route("/")
 def index():
+    update_reservations()
     return render_template("base.html")
 
 @app.route('/register', methods=('GET', 'POST'))
 def register():
+    update_reservations()
     if request.method == 'POST':
         session['username'] = None
         session['person_id'] = None
@@ -162,6 +185,7 @@ def register():
 
 @app.route("/login", methods = ('GET', 'POST'))
 def login():
+    update_reservations()
     if request.method == 'POST':
         clear_session()
         username1 = request.form['username']
@@ -195,12 +219,14 @@ def login():
 
 @app.route("/logout")
 def logout():
+    update_reservations()
     clear_session()
     return redirect(url_for('index'))
 
 @app.route("/show-users")
 @login_required
 def show_users():
+    update_reservations()
     query = "SELECT first_name, last_name FROM person;"
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query)
@@ -210,6 +236,7 @@ def show_users():
 @app.route("/change_password", methods = ('GET', 'POST'))
 @login_required
 def change_password():
+    update_reservations()
     if request.method == 'POST':
         new_pass = request.form['password']
         query = "UPDATE user SET pass = %s WHERE person_id = %s;"
@@ -224,11 +251,12 @@ def change_password():
 
 @app.route("/handler_login", methods = ('GET', 'POST'))
 def handler_login():
+    update_reservations()
     if request.method == 'POST':
         clear_session()
         username1 = request.form['username']
         password1 = request.form['password']
-        query = "SELECT handler_password, handler_activated FROM school WHERE handler_username = %s;"
+        query = "SELECT handler_password, handler_activated, school_id FROM school WHERE handler_username = %s;"
         username = (username1,)
         cur = db.cursor()
         cur.execute(query, username)
@@ -247,6 +275,7 @@ def handler_login():
             session["username"] = request.form["username"]
             session['husername'] = request.form["username"]
             session['hactivated'] = "T"
+            session['school_id'] = res[2]
             return redirect(url_for('handler_page'))
         
         flash(error)
@@ -256,6 +285,7 @@ def handler_login():
 @app.route("/admin_page")
 @admin_required
 def admin_page():
+    update_reservations()
     query = "SELECT school_id, handler_name, handler_surname, handler_username, handler_password, handler_activated FROM school;"
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query)
@@ -263,7 +293,9 @@ def admin_page():
     return render_template('admin_page.html', handlers=persons)
 
 @app.route("/<int:school_id>/hactivate", methods=('POST', 'GET'))
+@admin_required
 def hactivate(school_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE school SET handler_activated = 'T' WHERE school_id = %s;"
         args = (school_id,)
@@ -276,7 +308,9 @@ def hactivate(school_id):
     return render_template('admin_page.html')
 
 @app.route("/<int:school_id>/hdeactivate", methods=('POST', 'GET'))
+@admin_required
 def hdeactivate(school_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE school SET handler_activated = 'F' WHERE school_id = %s;"
         args = (school_id,)
@@ -291,14 +325,18 @@ def hdeactivate(school_id):
 @app.route("/handler_page")
 @handler_required
 def handler_page():
-    query = "SELECT person_id, username, pass, is_active FROM user;"
+    update_reservations() 
+    query = "SELECT person_id, username, pass, is_active FROM user WHERE school_id = %s;"
+    args = (session['school_id'],)
     cur = db.cursor(buffered=True, dictionary=True)
-    cur.execute(query)
+    cur.execute(query, args)
     users = cur.fetchall()
     return render_template('handler_page.html', persons=users)
 
 @app.route("/<int:person_id>/pactivate", methods=('POST', 'GET'))
+@handler_required
 def pactivate(person_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE user SET is_active = 'T' WHERE person_id = %s;"
         args = (person_id,)
@@ -306,12 +344,15 @@ def pactivate(person_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
+        flash("Account activated successfully.")
         return redirect(url_for('handler_page'))
     
     return render_template('handler_page.html')
 
 @app.route("/<int:person_id>/pdeactivate", methods=('POST', 'GET'))
+@handler_required
 def pdeactivate(person_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE user SET is_active = 'F' WHERE person_id = %s;"
         args = (person_id,)
@@ -319,6 +360,23 @@ def pdeactivate(person_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
+        flash("Account deactivated successfully.")
+        return redirect(url_for('handler_page'))
+    
+    return render_template('handler_page.html')
+
+@app.route("/<int:person_id>/pdelete", methods=('POST', 'GET'))
+@handler_required
+def pdelete(person_id):
+    update_reservations()
+    if request.method == 'POST':
+        query = "DELETE FROM user WHERE person_id = %s;"
+        args = (person_id,)
+        cur = db.cursor()
+        cur.execute(query, args)
+        db.commit()
+        cur.close()
+        flash("User deleted successfully.")
         return redirect(url_for('handler_page'))
     
     return render_template('handler_page.html')
@@ -326,6 +384,7 @@ def pdeactivate(person_id):
 @app.route("/books")
 @login_required
 def books():
+    update_reservations()
     query = "SELECT * FROM review;"
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query)
@@ -341,19 +400,12 @@ def books():
     cur.execute(query)
     current = cur.fetchall()
     cur.close()
-    for book in books:
-        query = "SELECT school_name FROM school WHERE school_id = %s;"
-        arg = (book['school_id'],)
-        cur = db.cursor(buffered=True, dictionary=True)
-        cur.execute(query, arg)
-        res = cur.fetchone()
-        cur.close()
-        book['school_id'] = res['school_name']
     return render_template('books.html', books=books, reviews=reviews, current=current)
 
 @app.route("/<string:ISBN>/add_review", methods=('GET', 'POST'))
 @login_required
 def add_review(ISBN):
+    update_reservations()
     if request.method == 'POST':
         query = "SELECT review_id FROM review ORDER BY review_id DESC;"
         cur = db.cursor()
@@ -379,6 +431,7 @@ def add_review(ISBN):
 @app.route("/<string:ISBN>/view_reviews")
 @handler_required
 def view_reviews(ISBN):
+    update_reservations()
     query = "SELECT * FROM review WHERE ISBN = %s;"
     args = (ISBN,)
     cur = db.cursor(buffered=True, dictionary=True)
@@ -389,6 +442,7 @@ def view_reviews(ISBN):
 @app.route("/<int:review_id>/ractivate", methods=('GET', 'POST'))
 @handler_required
 def ractivate(review_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE review SET is_approved = 'T' WHERE review_id = %s;"
         args = (review_id,)
@@ -404,6 +458,7 @@ def ractivate(review_id):
 @app.route("/<int:review_id>/rdeactivate", methods=('GET', 'POST'))
 @handler_required
 def rdeactivate(review_id):
+    update_reservations()
     if request.method == 'POST':
         query = "DELETE FROM review WHERE review_id = %s;"
         args = (review_id,)
@@ -419,6 +474,7 @@ def rdeactivate(review_id):
 @app.route("/<int:person_id>/my_profile", methods=('POST', 'GET'))
 @login_required
 def my_profile(person_id):
+    update_reservations()
     if request.method == 'GET':
         query = "SELECT * FROM person WHERE person_id = %s;"
         args = (person_id,)
@@ -486,9 +542,10 @@ def my_profile(person_id):
 @app.route("/<string:ISBN>/edit_book", methods=('GET', 'POST'))
 @handler_required
 def edit_book(ISBN):
+    update_reservations()
     if request.method == 'GET':
-        query = "SELECT * FROM book WHERE ISBN = %s;"
-        args = (ISBN,)
+        query = "SELECT * FROM book WHERE ISBN = %s AND school_id = %s;"
+        args = (ISBN, session['school_id'])
         cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
         book = cur.fetchone()
@@ -498,13 +555,11 @@ def edit_book(ISBN):
         try:
             title = request.form['title']
             publisher = request.form['publisher']
-            isbn = request.form['ISBN']
             author = request.form['author']
             pages = request.form['pages']
             summary = request.form['summary']
             copies = request.form['copies']
             picture = request.form['picture']
-            theme = request.form['theme']
             language = request.form['language']
             keywords = request.form['keywords']
             query = "SELECT * FROM book WHERE ISBN = %s;"
@@ -517,8 +572,6 @@ def edit_book(ISBN):
                 title = book['title']
             if publisher == '':
                 publisher = book['publisher']
-            if isbn == '':
-                isbn = book['ISBN']
             if author == '':
                 author = book['author']
             if pages == '':
@@ -526,17 +579,15 @@ def edit_book(ISBN):
             if summary == '':
                 summary = book['summary']
             if copies == '':
-                copies == book['copies']
+                copies = book['copies']
             if picture == '':
                 picture = book['picture']
-            if theme == '':
-                theme == book['theme']
             if language == '':
                 language = book['blanguage']
             if keywords == '':
                 keywords = book['keywords']
-            query = 'UPDATE book SET title = %s, publisher = %s, ISBN = %s, author = %s, pages = %s, summary = %s, copies = %s, picture = %s, theme = %s, blanguage = %s, keywords = %s WHERE ISBN = %s;'
-            args = (title, publisher, isbn, author, pages, summary, copies, picture, theme, language, keywords, ISBN)
+            query = 'UPDATE book SET title = %s, publisher = %s, author = %s, pages = %s, summary = %s, copies = %s, picture = %s, blanguage = %s, keywords = %s WHERE ISBN = %s;'
+            args = (title, publisher, author, pages, summary, copies, picture, language, keywords, ISBN)
             cur = db.cursor()
             cur.execute(query, args)
             db.commit()
@@ -545,6 +596,8 @@ def edit_book(ISBN):
             return redirect(url_for('edit_book', ISBN=ISBN))
         except Exception as e:
             flash(e)
+            flash(copies)
+            flash(book['copies'])
             query = "SELECT * FROM book WHERE ISBN = %s;"
             args = (ISBN,)
             cur = db.cursor(buffered=True, dictionary=True)
@@ -556,8 +609,13 @@ def edit_book(ISBN):
 @app.route("/add_book", methods=('GET', 'POST'))
 @handler_required
 def add_book():
+    update_reservations()
     if request.method == 'POST':
-        school_id = request.form['school_id']
+        school_id = int(request.form['school_id'])
+        if school_id != session['school_id']:
+            flash("Cannot add book for different school!")
+            flash(school_id == 2)
+            return redirect(url_for('books'))
         title = request.form['title']
         publisher = request.form['publisher']
         isbn = request.form['ISBN']
@@ -566,18 +624,40 @@ def add_book():
         summary = request.form['summary']
         copies = request.form['copies']
         picture = request.form['picture']
-        theme = request.form['theme']
         language = request.form['language']
         keywords = request.form['keywords']
-        query = "INSERT INTO book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, theme, blanguage, keywords) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
-        args = (school_id, title, publisher, isbn, author, pages, summary, copies, picture, theme, language, keywords)
+        theme1 = request.form['theme1']
+        theme2 = request.form['theme2']
+        theme3 = request.form['theme3']
+        query = "SELECT school_name FROM school WHERE school_id = %s;"
+        args = (session['school_id'],)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        name = cur.fetchone()
+        cur.close()
+        query = "INSERT INTO book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, blanguage, keywords, school_name) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+        args = (school_id, title, publisher, isbn, author, pages, summary, copies, picture, language, keywords, name['school_name'])
         cur = db.cursor()
         try:
             cur.execute(query, args)
             db.commit()
             cur.close()
-            flash("New book added successfully.")
-            return redirect(url_for('add_book'))
+
+            query = "INSERT INTO theme(indexer, ISBN, theme_name) VALUES (0, %s, %s);"
+            args = (isbn, theme1)
+            cur = db.cursor()
+            cur.execute(query, args)
+            if theme2 != '':
+                args = (isbn, theme2)
+                cur.execute(query, args)
+            if theme3 != '':
+                args = (isbn, theme3)
+                cur.execute(query, args)
+
+            db.commit()
+            cur.close()
+            flash("Your book was addedd successfully.")
+            return redirect(url_for('books'))
         except Exception as e:
             flash(e)
             return render_template('add_book.html')
@@ -587,11 +667,13 @@ def add_book():
 @app.route("/search", methods=('GET', 'POST'))
 @login_required
 def search():
+    update_reservations()
     if request.method == 'POST':
         title = request.form['title']
-        publisher = request.form['publisher']
+        theme = request.form['theme']
         ISBN = request.form['ISBN']
         author = request.form['author']
+        copies = request.form['copies']
         query = "SELECT * FROM currently_available;"
         cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query)
@@ -623,32 +705,40 @@ def search():
                 cur.close()
                 flash("Found the book(s) you requested.")
                 return render_template('results.html', books=res, reviews=reviews, current=current)
-        if publisher != '':
-            query = "SELECT * FROM book WHERE publisher = %s;"
-            args = (publisher,)
+        if theme != '':
+            query = "SELECT * FROM theme WHERE theme_name = %s;"
+            args = (theme,)
             cur = db.cursor(buffered=True, dictionary=True)
             cur.execute(query, args)
             res = cur.fetchall()
             cur.close()
             if len(res) == 0:
-                flash("No book with the publisher you provided exists in our database.")
+                flash("No book with the theme you provided exists in our database.")
                 return redirect(url_for('search'))
             else:
-                query = "SELECT * FROM book WHERE publisher = %s;"
-                args = (publisher,)
+                query = "SELECT * FROM theme WHERE theme_name = %s;"
+                args = (theme,)
                 cur = db.cursor(buffered=True, dictionary=True)
                 cur.execute(query, args)
-                res2 = cur.fetchone()
+                res2 = cur.fetchall()
                 cur.close()
-                ISBN = res2['ISBN']
-                query = "SELECT * FROM review WHERE ISBN = %s;"
-                args = (ISBN,)
-                cur = db.cursor(buffered=True, dictionary=True)
-                cur.execute(query, args)
-                reviews = cur.fetchall()
-                cur.close()
+                reviews = []
+                books = []
+                for x in res2:
+                    ISBN = x['ISBN']
+                    query = "SELECT * FROM review WHERE ISBN = %s;"
+                    args = (ISBN,)
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    cur.execute(query, args)
+                    reviews = reviews + cur.fetchall()
+                    cur.close()
+                    query = "SELECT * FROM book WHERE ISBN = %s;"
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    cur.execute(query, args)
+                    books = books + cur.fetchall()
+                    cur.close()
                 flash("Found the book(s) you requested.")
-                return render_template('results.html', books=res, reviews=reviews, current=current)
+                return render_template('results.html', books=books, reviews=reviews, current=current)
         if ISBN != '':
             query = "SELECT * FROM book WHERE ISBN = %s;"
             args = (ISBN,)
@@ -694,11 +784,41 @@ def search():
                 cur.close()
                 flash("Found the book(s) you requested.")
                 return render_template('results.html', books=res, reviews=reviews, current=current)
+            
+        if copies != '':
+            query = "SELECT * FROM book WHERE copies = %s;"
+            args = (copies,)
+            cur = db.cursor(buffered=True, dictionary=True)
+            cur.execute(query, args)
+            res = cur.fetchall()
+            cur.close()
+            if len(res) == 0:
+                flash("No book with the copies you provided exists in our database.")
+                return redirect(url_for('search'))
+            else:
+                query = "SELECT * FROM book WHERE copies = %s;"
+                args = (copies,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res2 = cur.fetchall()
+                cur.close()
+                reviews = []
+                for x in res2:
+                    ISBN = x['ISBN']
+                    query = "SELECT * FROM review WHERE ISBN = %s;"
+                    args = (ISBN,)
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    cur.execute(query, args)
+                    reviews = reviews + cur.fetchall()
+                    cur.close()
+                flash("Found the book(s) you requested.")
+                return render_template('results.html', books=res, reviews=reviews, current=current)
     return render_template('search.html')
 
 @app.route("/<string:ISBN>/make_reservation", methods=('GET', 'POST'))
 @login_required
 def make_reservation(ISBN):
+    update_reservations()
     if request.method == 'POST':
         # find reservation_id of last and add one to find current reservation_id
         query = "SELECT reservation_id FROM reservations ORDER BY reservation_id DESC LIMIT 1;"
@@ -849,6 +969,7 @@ def make_reservation(ISBN):
 @app.route("/view_reservations")
 @login_required
 def view_reservations():
+    update_reservations()
     username = session['username']
     query = 'SELECT * FROM reservations WHERE username = %s;'
     args = (username,)
@@ -861,6 +982,7 @@ def view_reservations():
 @app.route("/<int:reservation_id>/rdelete", methods=('GET', 'POST'))
 @login_required
 def rdelete(reservation_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE reservations SET is_over = 'T' WHERE reservation_id = %s;"
         args = (reservation_id,)
@@ -868,6 +990,7 @@ def rdelete(reservation_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
+        update_table()
         flash("Reservation was cancelled successfully.")
         return redirect(url_for('view_reservations'))
     return render_template('books.html')
@@ -875,6 +998,7 @@ def rdelete(reservation_id):
 @app.route("/<string:ISBN>/vreservations")
 @handler_required
 def vreservations(ISBN):
+    update_reservations()
     query = "SELECT * FROM reservations WHERE ISBN = %s;"
     args = (ISBN,)
     cur = db.cursor(buffered=True, dictionary=True)
@@ -886,6 +1010,7 @@ def vreservations(ISBN):
 @app.route("/<int:reservation_id>/make_borrow", methods=('POST', 'GET'))
 @handler_required
 def make_borrow(reservation_id):
+    update_reservations()
     if request.method == 'POST':
         query = "SELECT * FROM reservations WHERE reservation_id = %s;"
         args = (reservation_id,)
@@ -976,8 +1101,8 @@ def make_borrow(reservation_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
-        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date) VALUES (%s, %s, %s, %s, 'F', %s);"
-        args = (id, ISBN, username, tdate, rdate)
+        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date, school_id) VALUES (%s, %s, %s, %s, 'F', %s, %s);"
+        args = (id, ISBN, username, tdate, rdate, session['school_id'])
         cur = db.cursor()
         cur.execute(query, args)
         db.commit()
@@ -993,9 +1118,21 @@ def make_borrow(reservation_id):
 @app.route("/register_borrow", methods=('GET', 'POST'))
 @handler_required
 def register_borrow():
+    update_reservations()
     if request.method == 'POST':
         ISBN =  request.form['ISBN']
         username = request.form['user']
+
+        # check that the borrowing is made for a book of this handler's school
+        query = "SELECT school_id FROM book WHERE ISBN = %s"
+        args = (ISBN,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchone()
+        cur.close()
+        if (res != session['school_id']):
+            flash("Can't register the borrowing of a book that is not in your school.")
+            return (redirect(url_for('books')))
 
         # check that the user is eligible for the borrowing
         query = "SELECT * FROM now_borrowed WHERE username = %s;"
@@ -1045,10 +1182,10 @@ def register_borrow():
             id = x[0] + 1
 
         # make the borrowing
-        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date) VALUES (%s, %s, %s, %s, 'F', %s);"
+        query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date, school_id) VALUES (%s, %s, %s, %s, 'F', %s, %s);"
         tdate = datetime.datetime.now().replace(microsecond=0)
         rdate =  tdate + datetime.timedelta(days=7)
-        args = (id, ISBN, username, tdate, rdate)
+        args = (id, ISBN, username, tdate, rdate, session['school_id'])
         cur = db.cursor()
         cur.execute(query, args)
         db.commit()
@@ -1064,11 +1201,23 @@ def register_borrow():
 @app.route("/register_return", methods=('GET', 'POST'))
 @handler_required
 def register_return():
+    update_reservations()
     if request.method == 'POST':
+        
+        ISBN = request.form['ISBN']
+        # check that the borrowing is made for a book of this handler's school
+        query = "SELECT school_id FROM book WHERE ISBN = %s"
+        args = (ISBN,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchone()
+        cur.close()
+        if (res != session['school_id']):
+            flash("Can't register the return of a book that is not in your school.")
+            return (redirect(url_for('books')))
 
         #check for valid input
         username = request.form['user']
-        ISBN = request.form['ISBN']
         args = (username, ISBN)
         query = "SELECT * FROM now_borrowed WHERE username = %s AND ISBN = %s;"
         cur = db.cursor(buffered=True, dictionary=True)
@@ -1095,21 +1244,19 @@ def register_return():
 @app.route("/view_borrowings")
 @handler_required
 def view_borrowings():
-    query = "SELECT * FROM now_borrowed;"
+    update_reservations()
+    query = "SELECT * FROM now_borrowed WHERE school_id = %s;"
     cur = db.cursor(buffered=True, dictionary=True)
-    cur.execute(query)
+    args = (session['school_id'],)
+    cur.execute(query, args)
     borrowings = cur.fetchall()
     cur.close()
-    query = "SELECT * FROM reservations;"
-    cur = db.cursor(buffered=True, dictionary=True)
-    cur.execute(query)
-    reservations = cur.fetchall()
-    cur.close()
-    return render_template('view_borrowings.html', borrowings=borrowings, reservations=reservations)
+    return render_template('view_borrowings.html', borrowings=borrowings)
 
 @app.route("/<int:transaction_id>/make_return", methods=('GET', 'POST'))
 @handler_required
 def make_return(transaction_id):
+    update_reservations()
     if request.method == 'POST':
         query = "UPDATE now_borrowed SET is_returned = 'T' WHERE transaction_id = %s;"
         args = (transaction_id,)
@@ -1126,10 +1273,12 @@ def make_return(transaction_id):
 @app.route("/search_user", methods=('GET', 'POST'))
 @handler_required
 def search_user():
+    update_reservations()
     if request.method == 'POST':
         username = request.form['user']
-        args = (username,)
-        query = "SELECT * FROM user WHERE username = %s;"
+        args = (username, session['school_id'])
+        # only see users from the same school
+        query = "SELECT * FROM user WHERE username = %s AND school_id = %s;"
         cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
         user_info = cur.fetchone()
@@ -1137,6 +1286,7 @@ def search_user():
         if user_info is None:
             flash("No such user exists.")
             return redirect(url_for('books'))
+        args = (username,)
         query = "SELECT * FROM now_borrowed WHERE username = %s;"
         cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
@@ -1154,4 +1304,119 @@ def search_user():
 @app.route("/main_page")
 @login_required
 def main_page():
+    update_reservations()
     return render_template("main_page.html")
+
+@app.route("/borrowing_history")
+@login_required
+def borrowing_history():
+    query = "SELECT * FROM now_borrowed WHERE username = %s;"
+    args = (session['username'],)
+    cur = db.cursor(buffered=True, dictionary=True)
+    cur.execute(query, args)
+    history = cur.fetchall()
+    cur.close()
+    return render_template("borrowing_history.html", history=history)
+
+@app.route("/overdue_returns", methods=('GET', 'POST'))
+@handler_required
+def overdue_returns():
+    if request.method == 'POST':
+        
+        ctime = datetime.datetime.now().replace(microsecond=0)
+        ans = []
+
+        if request.form['name'] != '':
+            query = "SELECT person_id FROM person WHERE first_name = %s;"
+            cur = db.cursor(buffered=True, dictionary=True)
+            args = (request.form['name'],)
+            cur.execute(query, args)
+            ids = cur.fetchall()
+            cur.close()
+            persons = []
+            for id in ids:
+                persons.append(id['person_id'])
+
+            usernames = []
+            for i in persons:
+                query = "SELECT username FROM user WHERE person_id = %s;"
+                args = (i,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchone()
+                usernames.append(res['username'])
+                cur.close()
+
+            for user in usernames:
+                query = "SELECT * FROM now_borrowed WHERE username = %s AND is_returned = 'F';"
+                args = (user,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchall()
+                for x in res:
+                    time = x['return_date']
+                    if time is None or time == '':
+                        timediff = ctime - x['start_d'] - datetime.timedelta(days=7)
+                        x['return_date'] = timediff
+                ans = ans + res
+                cur.close()
+
+
+            return render_template('overdue_return_results.html', borrowings=ans)
+        
+        if request.form['lastname'] != '':
+            query = "SELECT person_id FROM person WHERE last_name = %s;"
+            cur = db.cursor(buffered=True, dictionary=True)
+            args = (request.form['lastname'],)
+            cur.execute(query, args)
+            ids = cur.fetchall()
+            cur.close()
+            persons = []
+            for id in ids:
+                persons.append(id['person_id'])
+
+            usernames = []
+            for i in persons:
+                query = "SELECT username FROM user WHERE person_id = %s;"
+                args = (i,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchone()
+                usernames.append(res['username'])
+                cur.close()
+
+            for user in usernames:
+                query = "SELECT * FROM now_borrowed WHERE username = %s AND is_returned = 'F';"
+                args = (user,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchall()
+                for x in res:
+                    time = x['return_date']
+                    if time is None or time == '':
+                        timediff = ctime - x['start_d'] - datetime.timedelta(days=7)
+                        x['return_date'] = timediff
+                ans = ans + res
+                cur.close()
+
+            return render_template('overdue_return_results.html', borrowings=ans)
+        
+        if request.form['days'] != '':
+
+            query = "SELECT * FROM now_borrowed WHERE start_d < %s AND is_returned = 'F';"
+            time = ctime - datetime.timedelta(days=7 + int(request.form['days']))  
+            cur = db.cursor(buffered=True, dictionary=True)
+            args = (time,)
+            cur.execute(query, args)
+            res = cur.fetchall()
+            cur.close()
+            for x in res:
+                time = x['return_date']
+                if time is None or time == '':
+                    timediff = ctime - x['start_d'] - datetime.timedelta(days=7)
+                    x['return_date'] = timediff
+
+
+            return render_template('overdue_return_results.html', borrowings=res)
+    
+    return render_template('overdue_returns.html')

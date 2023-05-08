@@ -13,9 +13,9 @@
       <header>
         <div>
           {% if person['is_active'] == None or person['is_active'] == 'F' %}
-            <div class="about">username: {{ person['username'] }} password: {{ person['password'] }} and account is not activated.</div>
+            <div class="about">username: {{ person['username'] }} password: {{ person['pass'] }} and account is not activated.</div>
           {% else %}
-            <div class="about">username: {{ person['username'] }} password: {{ person['password'] }} and account is activated.</div>
+            <div class="about">username: {{ person['username'] }} password: {{ person['pass'] }} and account is activated.</div>
           {% endif %}
         </div>
         {% if person['is_active'] == None or person['is_active'] == 'F' %}
@@ -26,6 +26,9 @@
             <form action="{{ url_for('pdeactivate', person_id=person['person_id']) }}" method="post">
                 <input class="danger" type="submit" value="Deactivate" onclick="return confirm('Are you sure?');">
             </form>
+            <form action="{{ url_for('pdelete', person_id=person['person_id']) }}" method="post">
+              <input class="danger" type="submit" value="Delete account" onclick="return confirm('Are you sure?');">
+          </form>
         {% endif %}
       </header>
     </article>

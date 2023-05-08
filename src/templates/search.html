@@ -14,12 +14,20 @@
   <form method="post">
     <label for="title">Title</label>
     <input name="title" id="title">
-    <label for="publisher">Publisher</label>
-    <input name="publisher" id="publisher">
+    <input type="submit" value="Search">
+    <label for="theme">Theme</label>
+    <input name="theme" id="theme">
+    <input type="submit" value="Search">
     <label for="ISBN">ISBN</label>
     <input name="ISBN" id="ISBN">
+    <input type="submit" value="Search">
     <label for="author">Author</label>
     <input name="author" id="author">
     <input type="submit" value="Search">
+    {% if session.husername %} 
+      <label for="copies">Copies</label>
+      <input name="copies" id="copies">
+      <input type="submit" value="Search">
+    {% endif %}
   </form>
 {% endblock %}

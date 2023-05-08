@@ -14,6 +14,8 @@
     <a class="action" href="{{ url_for('books') }}">Go to main book page</a>
     <p></p>
     <div><a class="action" href="{{ url_for('view_reservations') }}">View reservations</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('borrowing_history') }}">View borrowing history</a></div>
   {% endif %}
   {% if session.husername %}
     <p></p>
@@ -32,5 +34,7 @@
     <a class="action" href="{{ url_for('add_book') }}">Add new book(s)</a>
     <p></p>
     <a class="action" href="{{ url_for('search_user') }}">Search user</a>
+    <p></p>
+    <div><a class="action" href="{{ url_for('overdue_returns') }}">View overdue returns</a></div>
   {% endif %}
 {% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Borrowing History{% endblock %}</h1>
+  {% if session.username %}
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for book in history %}
+        <article class="Reservations">
+        <header>
+            <div>
+                <div class="about">ISBN : {{ book['ISBN'] }}</div>
+                <div class="about">On date : {{ book['start_d'] }}</div>
+                {% if book['is_returned'] == 'T' %} 
+                    <div class="about">Returned on date : {{ book['return_date'] }}</div>
+                {% else %} 
+                    <div class="about">Not yet returned.</div>
+                {% endif %}
+            </div>       
+        </header>
+        </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

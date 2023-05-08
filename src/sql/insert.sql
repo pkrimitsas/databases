@@ -1,5 +1,5 @@
 INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (1,'Παπαδόπουλος and Πρωτονοτάριος','Όδος Ξένος, 702','ΝικηφόροςVille',30,'aσταματιάδου@example.net','Δόμνα','Αλεξάνδρου','Κυβέλη','Χαραλαμπίδου','p','p','T');
-INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (2,'Κυριακοπούλου-Θεωδωρίδου','Λεωφόρος Παπαγεωργίου, 15','ΠαυσανίαςVille',30,'κωνσταντινίδης.σάρρα@example.net','Στέφανος','Παπαδόπουλος','Κλέαρχος','Γεννήτη','sσακελλαρίου','sκαλύβας',NULL);
+INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (2,'Κυριακοπούλου-Θεωδωρίδου','Λεωφόρος Παπαγεωργίου, 15','ΠαυσανίαςVille',30,'κωνσταντινίδης.σάρρα@example.net','Στέφανος','Παπαδόπουλος','Κλέαρχος','Γεννήτη','t','t','T');
 INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (3,'Διδασκάλου LLC','Όδος Βούλγαρης, 837','ΚοκκώναVille',4294967295,'θεολόγος.καπετανάκη@example.org','Αρχιμήδης','Οικονομίδης','Χαρίκλεια','Θεωδωροπούλου','παυλίνα.παπαστάμου','μακρή.ράλλης',NULL);
 INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (4,'Σακελλαρίου-Μπόγρη','Λεωφόρος Κωνσταντινίδης, 4','ΑθανασίαVille',30,'δαβιδούλα36@example.org','Παύλος','Ανδρεάδης','Απόλλων','Τρικούπη','qοικονομίδου','αρίσταρχος.αθανασιάδης',NULL);
 INSERT INTO school(school_id,school_name,address_name,city,phone_number,email,director_name,director_surname,handler_name,handler_surname,handler_username,handler_password,handler_activated) VALUES (5,'Μοραΐτη, Λαμέρας and Παπαϊωάννου','Όδος Κορομηλάς, 766','ΒελισσαρίαVille',30,'vσελινά@example.net','Μεθόδιος','Παπαγεωργίου','Δίκαιος','Ρέντης','λασκαρού.παρασκευή','βαλεντίνος.θεωδωρίδου',NULL);
@@ -62,7 +62,7 @@ INSERT INTO person(person_id,school_id,first_name,last_name,sex,person_type) VAL
 INSERT INTO person(person_id,school_id,first_name,last_name,sex,person_type) VALUES (50,2,'Συμεωνία','Σκλαβούνος','male','teacher');
 
 
-INSERT INTO user(person_id, username, pass, is_active, is_student) VALUES (1, 'p', 'p', 'T', 'T');
+INSERT INTO user(person_id, username, pass, is_active, is_student, school_id) VALUES (1, 'p', 'p', 'T', 'T', 1);
 
 insert into book (school_id, title, publisher, ISBN, author, pages, summary, copies, picture, theme, blanguage, keywords) values (10, 'Poor Boy''s Game', 'Boyer Inc', '870647696-1', 'Garret Clelle', 491, 'Nullam porttitor lacus at turpis. Donec posuere metus vitae ipsum. Aliquam non mauris.
 

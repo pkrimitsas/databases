@@ -1,5 +1,10 @@
-test.py
 test2.py
 src/__pycache__
 src.egg-info/
 __pycache__/
+*.png
+*.txt
+test3.py
+sql/insert.sql
+sql/test.sql
+run_once.py

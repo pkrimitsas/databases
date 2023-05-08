@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Overdue returns{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+{% endblock %}
+
+
+
+{% block content %}
+  {% for borrowing in borrowings %}
+    <article class="Returns">
+      <header>
+        <div>
+          <h1>{{ borrowing['transaction_id'] }}</h1>
+          <div class="about">Borrowing by user : {{ borrowing['username'] }} for book: {{ borrowing['ISBN'] }}</div>
+          <div class="about">On date : {{ borrowing['start_d'] }} and is overdue by {{ borrowing['return_date'] }}</div>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

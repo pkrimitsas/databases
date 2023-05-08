@@ -5,7 +5,7 @@
   <h1>LibraryApp</h1>
   <ul>
     {% if session.username %}
-      <li><span>{{ session.username['username'] or session.is_admin['is_admin'] or session.husername['husername']}}</span>
+      <li><span>{{ session.username or session.is_admin or session.husername }}</span>
       <li><a href="{{ url_for('logout') }}">Log Out</a>
       <li><a href="{{ url_for('change_password') }}">Change Password</a>
     {% else %}

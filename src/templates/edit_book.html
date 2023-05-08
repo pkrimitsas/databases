@@ -12,7 +12,7 @@
       <header>
         <div>
             <h1>{{ book['title'] }}</h1>
-            <div class="about"><img src="{{ book['picture'] }}" /></div>
+            <div class="about"><img src="{{ book['picture'] }}" style="width:132px;height:204px;"/></div>
             <div class="about">Author : {{ book['author'] }}</div>
             <div class="about">Publisher : {{ book['publisher'] }}</div>
             <div class="about">ISBN : {{ book['ISBN'] }}</div>
@@ -30,9 +30,6 @@
             <label for="publisher">Publisher</label>
             <input type="username" name="publisher" id="publisher">
             <input type="submit" value="Change">
-            <label for="ISBN">ISBN</label>
-            <input type="username" name="ISBN" id="ISBN">
-            <input type="submit" value="Change">
             <label for="author">Author</label>
             <input type="username" name="author" id="author">
             <input type="submit" value="Change">
@@ -45,11 +42,8 @@
             <label for="copies">Copies (must be positive int)</label>
             <input type="username" name="copies" id="copies">
             <input type="submit" value="Change">
-            <label for="picture">Picture (In string form, base 64 encoding)</label>
+            <label for="picture">Picture (Url for picture)</label>
             <input type="username" name="picture" id="picture">
-            <input type="submit" value="Change">
-            <label for="theme">Theme</label>
-            <input type="username" name="theme" id="theme">
             <input type="submit" value="Change">
             <label for="language">Language</label>
             <input type="username" name="language" id="language">

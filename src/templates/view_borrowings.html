@@ -14,8 +14,8 @@
 
 {% block content %}
   {% for borrowing in borrowings %}
-    <article class="Borrowings">
-      {% if borrowing['is_returned'] == 'F' %}  
+    {% if borrowing['is_returned'] == 'F' %} 
+      <article class="Borrowings"> 
       <header>
         <div>
           <h1>{{ borrowing['transaction_id'] }}</h1>

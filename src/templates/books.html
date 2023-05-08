@@ -10,13 +10,15 @@
   {% endif %}
 {% endblock %}
 
+
+
 {% block content %}
   {% for book in books %}
     <article class="Books">
       <header>
         <div>
           <h1>{{ book['title'] }}</h1>
-          <div class="about"><img src="{{ book['picture'] }}" style="width:142px;height:142px;"/></div>
+          <div class="about"><img src="{{ book['picture'] }}" style="width:132px;height:204px;"/></div>
           <div class="about">Author : {{ book['author'] }}</div>
           <div class="about">Publisher : {{ book['publisher'] }}</div>
           <div class="about">ISBN : {{ book['ISBN'] }}</div>
@@ -25,7 +27,7 @@
           <div class="about">Theme : {{ book['theme'] }}</div>
           <div class="about">Language : {{ book['blanguage'] }}</div>
           <div class="about">Keywords : {{ book['keywords'] }}</div>
-          <div class="about">Total copies : {{ book['copies'] }} in school: {{ book['school_id'] }}</div>
+          <div class="about">Total copies : {{ book['copies'] }} in school: {{ book['school_name'] }}</div>
           {% for curr in current %}
             {% if curr['ISBN'] == book['ISBN'] %}
                 <div class="about">Currently available are : {{ curr['current'] }}</div>
@@ -39,10 +41,12 @@
             {% endif %}
           {% endfor %}
         </div>
-        {% if session.husername %}
-          <a class="action" href="{{ url_for('edit_book', ISBN=book['ISBN']) }}">View and Edit book information</a>
-          <a class="action" href="{{ url_for('view_reviews', ISBN=book['ISBN']) }}">View and Edit Reviews</a>
-          <a class="action" href="{{ url_for('vreservations', ISBN=book['ISBN']) }}">View reservations about this book</a>
+        {% if session.husername  %}
+            {% if session.school_id == book['school_id'] %}
+              <a class="action" href="{{ url_for('edit_book', ISBN=book['ISBN']) }}">View and Edit book information</a>
+              <a class="action" href="{{ url_for('view_reviews', ISBN=book['ISBN']) }}">View and Edit Reviews</a>
+              <a class="action" href="{{ url_for('vreservations', ISBN=book['ISBN']) }}">View reservations about this book</a>
+            {% endif %}
         {% else %}
           <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
           {% for curr in current %}
