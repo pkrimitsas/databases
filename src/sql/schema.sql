@@ -5,16 +5,7 @@
 CREATE SCHEMA mydb;
 USE mydb;
 
--- central_admin(employee_id, name_surname)
-create table central_admin (
-        employee_id int unsigned not null,
-        name_surname varchar(50) not null,
-        user varchar(50) not null,
-        passphrase varchar(50) not null,
-        primary key (employee_id)
-);
-
--- school(school_id, school_name, address_name, city, phone_number, email, director_name, director_surname, handler_name, handler_surname)
+-- school(school_id, school_name, address_name, city, phone_number, email, director_name, director_surname, handler_name, handler_surname, handler_activated)
 create table school (
         school_id int unsigned not null auto_increment,
         school_name varchar(100) not null,
@@ -26,15 +17,14 @@ create table school (
         director_surname varchar(50) not null,
         handler_name varchar(50) not null,
         handler_surname varchar(50) not null,
-        handler_username varchar(50) not null,
-        handler_password varchar(50) not null,
-        handler_activated char(1),
         primary key (school_id),
         unique (school_name),
+        unique (handler_name),
+        unique (handler_surname),
     constraint ck_handler_activated check (handler_activated in ('T', 'F'))
 );
 
--- person(person_id, school_name, first_name, last_name, sex, person_type)
+-- person(person_id, school_id, first_name, last_name, sex, person_type, age)
 create table person (
         person_id int unsigned not null auto_increment,
         school_id int unsigned not null,
@@ -48,6 +38,23 @@ create table person (
     constraint fk_school_id foreign key (school_id) references school (school_id) on delete cascade on update cascade
 );
 
+-- handlers(person_id, school_id, handler_name, handler_surname, handler_username, handler_password)
+create table handlers (
+        person_id int unsigned not null,
+        school_id int unsigned not null,
+        handler_name varchar(50) not null,
+        handler_surname varchar(50) not null,
+        handler_username varchar(50) not null,
+        handler_password varchar(50) not null,
+        handler_activated char(1),
+        primary key (person_id),
+        unique (handler_username),
+    constraint fk_hname foreign key (handler_name) references school (handler_name) on delete cascade on update cascade,
+    constraint fk_hsurname foreign key (handler_surname) references school (handler_surname) on delete cascade on update cascade,
+    constraint fk_handl_school_id foreign key (school_id) references school (school_id) on delete cascade on update cascade,
+    constraint fk_handl_person_id foreign key (person_id) references person (person_id) on delete cascade on update cascade
+);
+
 -- user(person_id, username, pass, is_active, is_student)
 create table user (
         person_id int unsigned not null,
@@ -55,7 +62,7 @@ create table user (
         pass varchar(50) not null,
         is_active char(1),
         is_student char(1) not null,
-        school_id int unsigned not null auto_increment,
+        school_id int unsigned not null,
         primary key (person_id),
     constraint ck_username unique(username),
     constraint fk_school_id_user foreign key (school_id) references school (school_id) on delete cascade on update cascade,

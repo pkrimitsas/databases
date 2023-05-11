@@ -9,9 +9,11 @@ Faker.seed(0)
 
 # create 10 schools
 sids = {}
+handler_names = {}
+handler_surnames = {}
 for i in range(1, 11):
     query = """INSERT INTO school(school_id, school_name, address_name, city, phone_number, email, director_name, director_surname, handler_name,\
-            handler_surname, handler_username, handler_password, handler_activated) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+            handler_surname, handler_activated) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
     school_id = i
     school_name = fake.company()
     sids[i] = school_name
@@ -21,14 +23,16 @@ for i in range(1, 11):
     email = fake.email()
     director_name = fake.first_name()
     director_surname = fake.last_name()
-    handler_name = fake.first_name()
-    handler_surname = fake.last_name()
-    handler_username = fake.unique.user_name()
-    handler_password = fake.user_name()
+    handler_name = fake.unique.first_name()
+    handler_surname = fake.unique.last_name()
+    handler_names[i] = handler_name
+    handler_surnames[i] = handler_surname 
+    #handler_username = fake.unique.user_name()
+    #handler_password = fake.user_name()
     handler_activated = 'T'
 
     cur = db.cursor()
-    args = (school_id, school_name, address_name, city, phone_number, email, director_name, director_surname, handler_name, handler_surname, handler_username, handler_password, handler_activated)
+    args = (school_id, school_name, address_name, city, phone_number, email, director_name, director_surname, handler_name, handler_surname, handler_activated)
     cur.execute(query, args)
 
 # create 60 people
@@ -54,9 +58,41 @@ for i in range (1, 61):
     args = (person_id, school_id, first_name, last_name, sex, person_type, age)
     cur.execute(query, args)
 
+# create 10 more people who are handlers
+o = 61
+for i in range (1, 11):
+    query = "INSERT INTO person(person_id, school_id, first_name, last_name, sex, person_type, age) VALUES (%s, %s, %s, %s, %s, %s, %s);"
+    person_id = o
+    o = o + 1
+    school_id = i
+    first_name = handler_names[i]
+    last_name = handler_surnames[i]
+    choice = random.randrange(1, 3)
+    if choice == 1:
+        sex = 'male'
+    else :
+        sex = 'female'
+    person_type = 'handler'
+    age = random.randrange(30, 60)
+    args = (person_id, school_id, first_name, last_name, sex, person_type, age)
+    cur.execute(query, args)
+
+# insert those 10 handlers in handler table
+o = 61
+for i in range (1, 11):
+    query = "INSERT INTO handlers(person_id, school_id, handler_name, handler_surname, handler_username, handler_password, handler_activated) VALUES (%s, %s, %s, %s, %s, 'T');"
+    person_id = o
+    o = o + 1
+    school_id = i
+    handler_name = handler_names[i]
+    handler_surname = handler_surnames[i]
+    handler_username = fake.user_name()
+    handler_password = fake.user_name()
+    args = (person_id, school_id, handler_name, handler_surname, handler_username, handler_password)
+    cur.execute(query, args)
 
 author_list = ["author1", "author2", "author3", "author4",
-               "author5", "author6", "author7", "author8", "author9", "author10"]
+               "author5", "author6", "author7", "author8", "author9", "author10", "no-borrowings-author"]
 
 dict = {}
 # create 100 books
@@ -68,9 +104,12 @@ for i in range(101):
     school_name = sids[school_id]
     publisher = fake.company()
     ISBN = fake.unique.numerify("###-#-##-######-#")
-    dict[i] = ISBN
     choice = random.randrange(0, 10)
-    author = author_list[choice]
+    dict[i] = ISBN
+    if i < 100:
+        author = author_list[choice]
+    else :
+        author = author_list[10]
     pages = random.randrange(100, 1000)
     summary = fake.text()
     copies = random.randrange(1, 10)
@@ -88,28 +127,26 @@ theme_list = ["science-fiction", "poetry", "literature",
               "ancient-greece", "history", "music", "art", "mathematics"]
 
 j = 1
-index = 1
 check = random.sample(range(0, 11), 11)
 for i in range (11):
     j = j % 100
     if j == 0:
         j = 1
-    query = "INSERT INTO theme(indexer, ISBN, theme_name) VALUES (%s, %s, %s);"
+    query = "INSERT INTO theme(indexer, ISBN, theme_name) VALUES (0, %s, %s);"
     theme_name = theme_list[check[i]]
     # insert 11 books into each theme
-    for _ in range (12):
-        j = j % 100
+    for _ in range (1, 12):
+        j = j % 101
         if j == 0:
             j = 1
         ISBN = dict[j]
         j = j + 1
-        args = (index, ISBN, theme_name)
-        index = index + 1
+        args = (ISBN, theme_name)
         cur.execute(query, args)
 
 users = {}
-# create 51 users
-for i in range (1, 52):
+# create 60 users
+for i in range (1, 61):
     query = "INSERT INTO user(person_id, username, pass, is_active, is_student, school_id) VALUES (%s, %s, %s, %s, %s, %s);"
     person_id = i
     username = fake.unique.user_name()
@@ -133,8 +170,8 @@ for i in range (1, 52):
 
 # create 25 cancelled reservations
 i = 1
-myarr = random.sample(range(1, 51), 26)
-myarr2 = random.sample(range(1, 51), 26)
+myarr = random.sample(range(1, 61), 26)
+myarr2 = random.sample(range(1, 101), 26)
 for k in range (1, 26):
     query = "INSERT INTO reservations(reservation_id, ISBN, tdate, username, rdate, is_active, is_over) VALUES (%s, %s, %s, %s, %s, %s, %s);"
     reservation_id = i
@@ -149,14 +186,18 @@ for k in range (1, 26):
     args = (reservation_id, ISBN, tdate, username, rdate, is_active, is_over)
     cur.execute(query, args)
 
-myarr = random.sample(range(1, 51), 26)
-myarr2 = random.sample(range(1, 51), 50)
+# remove the last book with the no-book-author so that we have a book that has not been borrowed nor reserved
+dict.popitem()
+# create these 2 lists to ensure the 25 active reservation are about different books than the one currently borrowed so we dont get negative copies error
+risbn = random.sample(range(1, 101), 60)
+ruser = random.sample(range(1, 61), 60)
 # create 25 active reservations
 p = 0
 for k in range (1, 26):
     query = "INSERT INTO reservations(reservation_id, ISBN, tdate, username, rdate, is_active, is_over) VALUES (%s, %s, %s, %s, %s, %s, %s);"
     reservation_id = i
-    ISBN = dict[myarr2[p]]
+    # 25 different ISBN's
+    ISBN = dict[risbn[p]]
     p = p + 1
     choice = random.randrange(0, 7)
     tdate = datetime.datetime.now().replace(microsecond=0) - datetime.timedelta(days=choice)
@@ -164,20 +205,20 @@ for k in range (1, 26):
     is_active = 'T'
     is_over = 'F'
     i = i + 1
-    username = users[myarr[k]]
+    # 25 different users
+    username = users[ruser[p]]
     args = (reservation_id, ISBN, tdate, username, rdate, is_active, is_over)
     cur.execute(query, args)
 
 
 # create 500 borrowings that are completed
-myarr = random.sample(range(1, 52), 51)
 i = 1
 for _ in range (1, 501):
     query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date, school_id) VALUES (%s, %s, %s, %s, %s, %s, %s);"
     transaction_id = i
-    choice = random.randrange(0, 101)
+    choice = random.randrange(0, 100)
     ISBN = dict[choice]
-    choice = random.randrange(1, 51)
+    choice = random.randrange(1, 60)
     username = users[choice]
     choice = random.randrange(1, 364)
     start_d = datetime.datetime.now().replace(microsecond=0) - datetime.timedelta(days=choice)
@@ -198,13 +239,14 @@ for _ in range (1, 501):
     cur.execute(query, args)
 
 # create 30 borrowings that are not completed
-myarr = random.sample(range(1, 51), 31)
 for k in range (1, 26):
     query = "INSERT INTO now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date, school_id) VALUES (%s, %s, %s, %s, %s, %s, %s);"
     transaction_id = i
-    ISBN = dict[myarr2[p]]
+    # to ensure different books are now_borrowed
+    ISBN = dict[risbn[p]]
+    # to ensure different users have borrowed these books
+    username = users[ruser[p]]
     p = p + 1
-    username = users[myarr[k]]
     choice = random.randrange(1, 25)
     start_d = datetime.datetime.now().replace(microsecond=0) - datetime.timedelta(days=choice)
     choice = random.randrange(1, 11)
@@ -224,9 +266,9 @@ for k in range (1, 26):
 # create 50 reviews
 for k in range (1, 51):
     query = "INSERT INTO review(review_id, ISBN, username, opinion, is_approved, scale) VALUES (0, %s, %s, %s, %s, %s);"
-    choice = random.randrange(1, 101)
+    choice = random.randrange(1, 100)
     ISBN = dict[choice]
-    choice = random.randrange(1, 51)
+    choice = random.randrange(1, 60)
     username = users[choice]
     opinion = fake.text()
     choice = random.randrange(1, 6)
@@ -243,13 +285,10 @@ curr = db.cursor(buffered=True, dictionary=True)
 curr.execute(query);
 res = curr.fetchall()
 curr.close()
-curr = db.cursor()
 for book in res:
     query = 'INSERT INTO currently_available(ISBN, current) VALUES (%s, %s);'
     args = (book['ISBN'], book['copies'])
-    curr.execute(query, args)
-
-curr.close()
+    cur.execute(query, args)
 
 query = "SELECT * FROM currently_available;"
 cur = db.cursor(buffered=True, dictionary=True)

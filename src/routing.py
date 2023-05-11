@@ -1,5 +1,5 @@
 from flask import render_template, flash, request, url_for, redirect, session
-import mysql.connector
+#import mysql.connector
 from src import app, db
 import functools
 import datetime
@@ -165,6 +165,15 @@ def register():
                 flash(error)
                 return redirect(url_for('login'))
             
+            query = "SELECT * FROM handler WHERE person_id = %s"
+            cur = db.cursor()
+            args = (person_id1,)
+            cur.execute(query, args)
+            res2 = cur.fetchall()
+            cur.close()
+            if len(res2) != 0:
+                error = "The person with this person ID is a handler."
+
             query = "SELECT * FROM user WHERE person_id = %s"
             cur = db.cursor()
             args = (person_id1,)
@@ -270,7 +279,7 @@ def handler_login():
         clear_session()
         username1 = request.form['username']
         password1 = request.form['password']
-        query = "SELECT handler_password, handler_activated, school_id FROM school WHERE handler_username = %s;"
+        query = "SELECT handler_password, handler_activated, school_id FROM handlers WHERE handler_username = %s;"
         username = (username1,)
         cur = db.cursor()
         cur.execute(query, username)
@@ -2038,7 +2047,7 @@ def overdue_returns():
             if request.form['days'] != '':
                 if request.form['days'] < '0':
                     flash("Days must be positive integer")
-                    return redirect(url_for('search'))
+                    return redirect(url_for('overdue_returns'))
                 
                 if not checkInt(request.form['days']):
                     flash("Days must be integers!")

@@ -1,7 +1,7 @@
 html {
     font-family: sans-serif;
     background: #d3d28e;
-    padding: 1rem;
+    padding: 3rem;
   }
   
   body {
@@ -130,5 +130,5 @@ html {
   
   input[type=submit] {
     align-self: start;
-    min-width: 10em;
+    min-width: 5em;
   }
