@@ -132,6 +132,72 @@ def admin_login():
         
     return render_template('admin_login.html')
 
+@app.route("/register-school", methods=('GET', 'POST'))
+@admin_required
+def register_school():
+    if request.method == 'POST':
+        school_name = request.form['school_name']
+        address = request.form['address']
+        city = request.form['city']
+        phone = request.form['phone']
+        email = request.form['email']
+        dname = request.form['dname']
+        dsur = request.form['dsur']
+        hname = request.form['hname']
+        hsur = request.form['hsur']
+        hac = request.form['hact']
+
+        huser = request.form['huser']
+        hpass = request.form['hpass']
+
+        if hac != 'T' and hac != 'F':
+            flash("Invalid value for Handler Activated Account.")
+            return redirect(url_for('register_school'))
+        
+        if not checkInt(phone) or int(phone) <= 0:
+            flash("This phone number is not valid.")
+            return redirect(url_for('register_school'))
+
+        query = """INSERT INTO school(school_id, school_name, address_name, city, phone_number, email, director_name, 
+                    director_surname, handler_name, handler_surname, handler_activated) 
+                    VALUES (0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+        
+        args = (school_name, address, city, phone, email, dname, dsur, hname, hsur, hac)
+        cur = db.cursor()
+        
+        cur.execute(query, args)
+
+        query = "SELECT school_id FROM school ORDER BY school_id DESC LIMIT 1;"
+        cur.execute(query)
+        res = cur.fetchone()
+        school_id = res[0] 
+
+        query = """INSERT INTO person(person_id, school_id, first_name, last_name, sex, person_type, age) VALUES
+                                        (0, %s, %s, %s, 'update', 'update', 1);"""
+        
+        args = (school_id, hname, hsur)
+        cur.execute(query, args)
+
+        query = "SELECT person_id FROM person ORDER BY person_id DESC LIMIT 1;"
+        cur.execute(query)
+        res = cur.fetchone()
+        pid = int(res[0])
+
+        query = """INSERT INTO handlers(person_id, school_id, handler_name, handler_surname, handler_username, handler_password)
+                    VALUES (%s, %s, %s, %s, %s, %s);"""
+        
+        args = (pid, school_id, hname, hsur, huser, hpass)
+        cur.execute(query, args)
+
+        db.commit()
+        cur.close()
+        
+        flash("New school was addedd successfully.")
+        return redirect(url_for('admin_page'))
+    
+
+    return render_template("register_school.html")
+
 @app.route("/")
 def index():
     update_reservations()
@@ -261,16 +327,58 @@ def show_users():
 def change_password():
     update_reservations()
     if request.method == 'POST':
-        new_pass = request.form['password']
-        query = "UPDATE user SET pass = %s WHERE person_id = %s;"
-        args = (new_pass, session['person_id'])
+        if session['husername'] is None or session['husername'] == '':
+            new_pass = request.form['password']
+            query = "UPDATE user SET pass = %s WHERE person_id = %s;"
+            args = (new_pass, session['person_id'])
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+            flash("Password changed successfully.")
+            clear_session()
+            return redirect(url_for('login'))
+        else :
+            new_pass = request.form['password']
+            query = "UPDATE handlers SET handler_password = %s WHERE person_id = %s;"
+            args = (new_pass, session['person_id'])
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+            flash("Password changed successfully.")
+            clear_session()
+            return redirect(url_for('handler_login'))
+    return render_template('change_password.html')
+
+@app.route("/add_person", methods=('POST', 'GET'))
+@handler_required
+def add_person():
+    if request.method == 'POST':
+        sid = session['school_id']
+        name = request.form['name']
+        lname = request.form['lname']
+        sex = request.form['sex']
+        age = request.form['age']
+        ptype = request.form['type']
+
+        query = "INSERT INTO person(person_id, school_id, first_name, last_name, sex, person_type, age) VALUES (0, %s, %s, %s, %s, %s, %s);"
+        args = (sid, name, lname, sex, ptype, age)
         cur = db.cursor()
         cur.execute(query, args)
         db.commit()
         cur.close()
-        flash("Password changed successfully.")
-        return redirect(url_for('login'))
-    return render_template('change_password.html')
+
+        query = "SELECT person_id FROM person ORDER BY person_id DESC LIMIT 1;"
+        cur = db.cursor()
+        cur.execute(query)
+        res = cur.fetchone()
+        cur.close()
+
+        flash(f"Person Id of newly created person is {res[0]}")
+        return redirect(url_for('handler_page'))
+    
+    return render_template("add_person.html")
 
 @app.route("/handler_login", methods = ('GET', 'POST'))
 def handler_login():
@@ -279,19 +387,25 @@ def handler_login():
         clear_session()
         username1 = request.form['username']
         password1 = request.form['password']
-        query = "SELECT handler_password, handler_activated, school_id FROM handlers WHERE handler_username = %s;"
+        query = "SELECT person_id, handler_password, school_id FROM handlers WHERE handler_username = %s;"
         username = (username1,)
         cur = db.cursor()
         cur.execute(query, username)
         res = cur.fetchone()
         cur.close()
+        query = "SELECT handler_activated FROM school WHERE school_id = %s;"
+        args = (res[2],)
+        cur = db.cursor()
+        cur.execute(query, args)
+        res2 = cur.fetchone()
+        cur.close()
         error = None
         if res is None:
             flash("This handler does not exist")
             return redirect(url_for('index'))
-        if password1 != res[0]:
+        if password1 != res[1]:
             error = "Incorrect password."
-        elif 'T' != res[1]:
+        elif 'T' != res2[0]:
             error = "Handler not activated, wait for the admin to activate your account."
 
         if error is None:
@@ -299,6 +413,7 @@ def handler_login():
             session['husername'] = request.form["username"]
             session['hactivated'] = "T"
             session['school_id'] = res[2]
+            session['person_id'] = res[0]
             return redirect(url_for('handler_page'))
         
         flash(error)
@@ -517,7 +632,12 @@ def my_profile(person_id):
         cur.execute(query, args)
         user = cur.fetchone()
         cur.close()
-        return render_template('my_profile.html', person=person, user=user)
+        query = "SELECT * FROM handlers WHERE person_id = %s;"
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        handler = cur.fetchone()
+        cur.close()
+        return render_template('my_profile.html', person=person, user=user, handler=handler)
     else :
         first_name = request.form['first_name']
         last_name = request.form['last_name']
@@ -529,32 +649,62 @@ def my_profile(person_id):
         cur.execute(query, args)
         person = cur.fetchone()
         cur.close()
-        query = "SELECT username FROM user WHERE person_id = %s;"
-        args = (person_id,)
-        cur = db.cursor(buffered=True, dictionary=True)
-        cur.execute(query, args)
-        user = cur.fetchone()
-        cur.close()
+        if session['husername'] is None or session['husername'] == '':
+            query = "SELECT username FROM user WHERE person_id = %s;"
+            args = (person_id,)
+            cur = db.cursor(buffered=True, dictionary=True)
+            cur.execute(query, args)
+            user = cur.fetchone()
+            cur.close()
+            if username == '':
+                username = user['username']
+        else :
+            query = "SELECT handler_username FROM handlers WHERE person_id = %s;"
+            args = (person_id,)
+            cur = db.cursor(buffered=True, dictionary=True)
+            cur.execute(query, args)
+            handler = cur.fetchone()
+            cur.close()
+            if username == '':
+                username = handler['handler_username']
         if first_name == '':
             first_name = person['first_name']
         if last_name == '':
             last_name = person['last_name']
         if sex == '':
             sex = person['sex']
-        if username == '':
-            username = user['username']
-        query = "UPDATE person SET first_name = %s, last_name = %s, sex = %s WHERE person_id = %s;"
-        args = (first_name, last_name, sex, person_id)
-        cur = db.cursor()
-        cur.execute(query, args)
-        db.commit()
-        cur.close()
-        query = "UPDATE user SET username = %s WHERE person_id = %s;"
-        args = (username, person_id)
-        cur = db.cursor()
-        cur.execute(query, args)
-        db.commit()
-        cur.close()
+        if session['husername'] is None or session['husername'] == '':
+            query = "UPDATE user SET username = %s WHERE person_id = %s;"
+            args = (username, person_id)
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+            query = "UPDATE person SET first_name = %s, last_name = %s, sex = %s WHERE person_id = %s;"
+            args = (first_name, last_name, sex, person_id)
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+        else :
+            query = "UPDATE handlers SET handler_username = %s WHERE person_id = %s;"
+            args = (username, person_id)
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+            query = "UPDATE school SET handler_name = %s, handler_surname = %s WHERE school_id = %s;"
+            args = (first_name, last_name, session['school_id'])
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
+            query = "UPDATE person SET first_name = %s, last_name = %s, sex = %s WHERE person_id = %s;"
+            args = (first_name, last_name, sex, person_id)
+            cur = db.cursor()
+            cur.execute(query, args)
+            db.commit()
+            cur.close()
         query = "SELECT * FROM person WHERE person_id = %s;"
         args = (person_id,)
         cur = db.cursor(buffered=True, dictionary=True)
@@ -566,8 +716,13 @@ def my_profile(person_id):
         cur.execute(query, args)
         user = cur.fetchone()
         cur.close()
+        query = "SELECT * FROM handlers WHERE person_id = %s;"
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        handler = cur.fetchone()
+        cur.close()
         flash("Changes were made successfully.")
-        return render_template('my_profile.html', person=person, user=user)
+        return render_template('my_profile.html', person=person, user=user, handler=handler)
     
 @app.route("/<string:ISBN>/edit_book", methods=('GET', 'POST'))
 @handler_required
@@ -641,11 +796,7 @@ def edit_book(ISBN):
 def add_book():
     update_reservations()
     if request.method == 'POST':
-        school_id = int(request.form['school_id'])
-        if school_id != session['school_id']:
-            flash("Cannot add book for different school!")
-            flash(school_id == 2)
-            return redirect(url_for('books'))
+        school_id = session['school_id']
         title = request.form['title']
         publisher = request.form['publisher']
         isbn = request.form['ISBN']

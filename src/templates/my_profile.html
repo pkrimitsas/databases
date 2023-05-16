@@ -19,15 +19,23 @@
             <div class="about">First Name : {{ person['first_name'] }}</div>
             <div class="about">Last Name : {{ person['last_name'] }}</div>
             <div class="about">Sex : {{ person['sex'] }}</div>
-            <div class="about">Username : {{ user['username'] }}</div>
-            <div class="about">Password : {{ user['pass'] }}</div>
+            <div class="about">Age : {{ person['age'] }}</div>
+            {% if session.husername %}
+                <div class="about">Username : {{ handler['handler_username'] }}</div>
+                <div class="about">Password : {{ handler['handler_password'] }}</div>
+            {% else %}
+                <div class="about">Username : {{ user['username'] }}</div>
+                <div class="about">Password : {{ user['pass'] }}</div>
+            {% endif %}
             {% if user['is_student'] == 'T'%}
                 <div class="about">This user is a student.</div>
-            {% else %}
+            {% elif user['is_student'] == 'F' %}
                 <div class="about">This user is a teacher.</div>
+            {% else %}
+                <div class="about">This user is a handler.</div>
             {% endif %}
         </div>
-        {% if user['is_student'] == 'F' %}
+        {% if user['is_student'] == 'F' or session.husername %}
         <form method="post">
             <label for="first_name">First Name</label>
             <input name="first_name" id="first_name">

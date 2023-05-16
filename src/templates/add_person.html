@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Add a new person{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="firstname">First Name</label>
+    <input name="name" id="name" required>
+    <label for="lname">Last Name</label>
+    <input name="lname" id="lname" required>
+    <label for="sex">Sex</label>
+    <input name="sex" id="sex" required>
+    <label for="type">Person Type (teacher, student)</label>
+    <input name="type" id="type" required>
+    <label for="age">Age</label>
+    <input name="age" id="age" required>
+    <input type="submit" value="Add person">
+  </form>
+{% endblock %}

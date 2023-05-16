@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Register a New School{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    <label for="School Name">School Name</label>
+    <input name="school_name" id="school_name" required>
+    <label for="address">Address</label>
+    <input name="address" id="address" required>
+    <label for="city">City</label>
+    <input name="city" id="city" required>
+    <label for="phone">Phone Number</label>
+    <input name="phone" id="phone" required>
+    <label for="email">Email</label>
+    <input name="email" id="email" required>
+    <label for="dname">Director Name</label>
+    <input name="dname" id="dname" required>
+    <label for="dsur">Director Surname</label>
+    <input name="dsur" id="dsur" required>
+    <label for="hname">Handler Name</label>
+    <input name="hname" id="hname" required>
+    <label for="hsur">Handler Surname</label>
+    <input name="hsur" id="hsur" required>
+    <label for="hact">Handler Activated Account (Either T or F, for True and False)</label>
+    <input name="hact" id="hact" required>
+    <label for="huser">Handler account username (handler can change them)</label>
+    <input name="huser" id="huser" required>
+    <label for="hpass">Handler password</label>
+    <input name="hpass" id="hpass" required>
+    <input type="submit" value="Register">
+  </form>
+{% endblock %}
