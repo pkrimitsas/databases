@@ -2,7 +2,7 @@ test2.py
 src/__pycache__
 src.egg-info/
 __pycache__/
-*.png
+picture.png
 *.txt
 test3.py
 src/sql/insert.sql
