@@ -80,7 +80,7 @@ for i in range (1, 11):
 # insert those 10 handlers in handler table
 o = 61
 for i in range (1, 11):
-    query = "INSERT INTO handlers(person_id, school_id, handler_name, handler_surname, handler_username, handler_password, handler_activated) VALUES (%s, %s, %s, %s, %s, 'T');"
+    query = "INSERT INTO handlers(person_id, school_id, handler_name, handler_surname, handler_username, handler_password) VALUES (%s, %s, %s, %s, %s, %s);"
     person_id = o
     o = o + 1
     school_id = i
@@ -189,7 +189,7 @@ for k in range (1, 26):
 # remove the last book with the no-book-author so that we have a book that has not been borrowed nor reserved
 dict.popitem()
 # create these 2 lists to ensure the 25 active reservation are about different books than the one currently borrowed so we dont get negative copies error
-risbn = random.sample(range(1, 101), 60)
+risbn = random.sample(range(1, 100), 60)
 ruser = random.sample(range(1, 61), 60)
 # create 25 active reservations
 p = 0

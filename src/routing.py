@@ -309,7 +309,7 @@ def handler_login():
 @admin_required
 def admin_page():
     update_reservations()
-    query = "SELECT school_id, handler_name, handler_surname, handler_username, handler_password, handler_activated FROM school;"
+    query = "SELECT school_id, handler_name, handler_surname, handler_activated FROM school;"
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query)
     persons = cur.fetchall()
