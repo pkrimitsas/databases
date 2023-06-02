@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Books{% endblock %}</h1>
+  <h1>{% block title %}Main page{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
-{% if session.username and not session.husername and not session.is_admin %}
+  {% if session.username and not session.husername and not session.is_admin %}
     <p></p>
     <div><a class="action" href="{{ url_for('search') }}">Search for book</a></div>
     <p></p>
@@ -16,8 +16,7 @@
     <div><a class="action" href="{{ url_for('view_reservations') }}">View reservations</a></div>
     <p></p>
     <div><a class="action" href="{{ url_for('borrowing_history') }}">View borrowing history</a></div>
-  {% endif %}
-  {% if session.husername %}
+  {% elif session.husername %}
     <p></p>
     <a class="action" href="{{ url_for('view_borrowings') }}">View active borrowings</a>
     <p></p>
@@ -61,6 +60,12 @@
     <div><a class="action" href="{{ url_for('admin_page') }}">Handle handler's accounts</a></div>
     <p></p>
     <div><a class="action" href="{{ url_for('register_school') }}">Register a new school</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('backup') }}">Create backup</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('restore') }}">Restore system from backup</a></div>
+    <p></p>
+    <div><a class="action" href="{{ url_for('school_info') }}">Edit school information</a></div>
   {% endif %}
   <p></p>
   <p></p>

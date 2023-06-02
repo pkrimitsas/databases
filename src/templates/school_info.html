@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Books{% endblock %}</h1>
+  {% if session.username and not session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+  {% if session.husername %}
+    <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+{% endblock %}
+
+
+
+{% block content %}
+  {% for school in schools %}
+    <article class="Schools">
+      <header>
+        <div>
+          <h1>{{ school['school_name'] }}</h1>
+          <div class="about">School Id : {{ school['school_id'] }}</div>
+          <div class="about">Address : {{ school['address_name'] }}</div>
+          <div class="about">City : {{ school['city'] }}</div>
+          <div class="about">Phone number : {{ school['phone_number'] }}</div>
+          <div class="about">Email : {{ school['email'] }}</div>
+          <div class="about">Director name : {{ school['director_name'] }}</div>
+          <div class="about">Director surname : {{ school['director_surname'] }}</div>
+          <div class="about">Handler name : {{ school['handler_name'] }}</div>
+          <div class="about">Handler surname : {{ school['handler_surname'] }}</div>
+          {% if school['handler_activated'] == 'T' %}
+            <div class="about">Handler activated : Yes</div>
+          {% else %}
+            <div class="about">Handler activated : No</div>
+          {% endif %}
+          <p></p>
+          <p></p>
+        </div>
+        <form action="{{ url_for('edit_school_info', school_id=school['school_id']) }}" method="get">
+            <input type="submit" value="Edit school information">
+        </form>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}

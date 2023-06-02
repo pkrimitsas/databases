@@ -3,6 +3,7 @@ from flask import render_template, flash, request, url_for, redirect, session
 from src import app, db
 import functools
 import datetime
+import os
 
 def update_reservations():
     query = "SELECT * FROM reservations;"
@@ -13,7 +14,10 @@ def update_reservations():
     current_time = datetime.datetime.now().replace(microsecond=0)
     curr = db.cursor()
     for reservation in reservations:
-        if reservation['rdate'] < current_time:
+        # we dont want to mark as over the reservation made by users because no copies were available
+        # we only want the reservations that are active and the time has passed
+        # to be marked as over
+        if reservation['rdate'] < current_time and reservation['is_active'] == 'T':
             query = "UPDATE reservations SET is_active = 'F', is_over = 'T' WHERE reservation_id = %s;"
             args = (reservation['reservation_id'])
             curr.execute(query, args)
@@ -207,9 +211,7 @@ def index():
 def register():
     update_reservations()
     if request.method == 'POST':
-        session['username'] = None
-        session['person_id'] = None
-        session['activated'] = None
+        clear_session()
         username1 = request.form['username']
         password1 = request.form['password']
         person_id1 = request.form['person_id']
@@ -231,7 +233,7 @@ def register():
                 flash(error)
                 return redirect(url_for('login'))
             
-            query = "SELECT * FROM handler WHERE person_id = %s"
+            query = "SELECT * FROM handlers WHERE person_id = %s"
             cur = db.cursor()
             args = (person_id1,)
             cur.execute(query, args)
@@ -250,23 +252,28 @@ def register():
                 error = "User with this person_id is already registered."
 
             if error is None:
-                query = "SELECT person_type FROM person WHERE person_id = %s;"
+                query = "SELECT person_type, school_id FROM person WHERE person_id = %s;"
                 person_id = (person_id1,)
                 cur=db.cursor()
                 cur.execute(query, person_id)
                 res = cur.fetchone()
                 cur.close()
                 is_student = ""
+                if res is None:
+                    error = "Person with this person_id does not exist (handler should create the person first)"
+                    flash(error)
+                    return redirect(url_for('index'))
                 if res[0] == "student":
                     is_student = "T"
                 else:
                     is_student = "F"
-                query = "insert into user(person_id, username, pass, is_active, is_student) values (%s, %s, %s, 'F', %s);"
-                values = (person_id1, username1, password1, is_student)
+                query = "insert into user(person_id, username, pass, is_active, is_student, school_id) values (%s, %s, %s, 'F', %s, %s);"
+                values = (person_id1, username1, password1, is_student, res[1])
                 cur = db.cursor()
                 cur.execute(query, values)
                 db.commit()
                 cur.close()
+                flash("Registered successfully, wait for the handler to activate your account.")
                 return redirect(url_for('login'))
             
             flash(error)
@@ -393,6 +400,9 @@ def handler_login():
         cur.execute(query, username)
         res = cur.fetchone()
         cur.close()
+        if res is None or len(res) == 0:
+            flash("No handler with this username exists.")
+            return redirect(url_for('index'))
         query = "SELECT handler_activated FROM school WHERE school_id = %s;"
         args = (res[2],)
         cur = db.cursor()
@@ -771,6 +781,9 @@ def edit_book(ISBN):
                 language = book['blanguage']
             if keywords == '':
                 keywords = book['keywords']
+            if len(title) > 199 or len(publisher) > 49 or len(author) > 49 or len(language) > 49:
+                flash("One of the fields you provided is too long.")
+                return render_template('edit_book.html', book=book)
             query = 'UPDATE book SET title = %s, publisher = %s, author = %s, pages = %s, summary = %s, copies = %s, picture = %s, blanguage = %s, keywords = %s WHERE ISBN = %s;'
             args = (title, publisher, author, pages, summary, copies, picture, language, keywords, ISBN)
             cur = db.cursor()
@@ -781,8 +794,8 @@ def edit_book(ISBN):
             return redirect(url_for('edit_book', ISBN=ISBN))
         except Exception as e:
             flash(e)
-            flash(copies)
-            flash(book['copies'])
+            #flash(copies)
+            #flash(book['copies'])
             query = "SELECT * FROM book WHERE ISBN = %s;"
             args = (ISBN,)
             cur = db.cursor(buffered=True, dictionary=True)
@@ -835,6 +848,10 @@ def add_book():
                 args = (isbn, theme3)
                 cur.execute(query, args)
 
+            # also add to currently_available
+            query = "INSERT INTO currently_available(ISBN, current) VALUES (%s, %s);"
+            args = (isbn, copies)
+            cur.execute(query, args)
             db.commit()
             cur.close()
             flash("Your book was addedd successfully.")
@@ -1158,21 +1175,26 @@ def search():
                     args = (author,)
                     cur = db.cursor(buffered=True, dictionary=True)
                     cur.execute(query, args)
-                    res2 = cur.fetchone()
+                    res2 = cur.fetchall()
                     cur.close()
-                    ISBN = res2['ISBN']
-                    query = "SELECT * FROM review WHERE ISBN = %s;"
-                    args = (ISBN,)
-                    cur = db.cursor(buffered=True, dictionary=True)
-                    cur.execute(query, args)
-                    reviews = cur.fetchall()
-                    cur.close()
-                    query = "SELECT * FROM theme WHERE ISBN = %s;"
-                    args = (ISBN,)
-                    cur = db.cursor(buffered=True, dictionary=True)
-                    cur.execute(query, args)
-                    themes =cur.fetchall()
-                    cur.close()
+                    themes = []
+                    reviews = []
+                    for x in res2:
+                        ISBN = x['ISBN']
+                        query = "SELECT * FROM review WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        rev = cur.fetchall()
+                        cur.close()
+                        query = "SELECT * FROM theme WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        th =cur.fetchall()
+                        cur.close()
+                        themes = themes + th
+                        reviews = reviews + rev
                     flash("Found the book(s) you requested.")
                     return render_template('results.html', books=res, reviews=reviews, current=current, themes=themes)
             
@@ -1258,7 +1280,7 @@ def search():
                                 themes = themes + cur.fetchall()
                                 cur.close()
 
-                            flash("Success!")
+                            flash("Found the book(s) you requested!")
                             return render_template("results.html", books=books, reviews=reviews, current=current, themes=themes)
                         else :
                             # title and theme are not NULL, author is NULL
@@ -1491,28 +1513,381 @@ def search():
                     args = (author,)
                     cur = db.cursor(buffered=True, dictionary=True)
                     cur.execute(query, args)
-                    res2 = cur.fetchone()
+                    res2 = cur.fetchall()
                     cur.close()
-                    ISBN = res2['ISBN']
+                    themes = []
+                    reviews = []
+                    for x in res2:
+                        ISBN = x['ISBN']
+                        query = "SELECT * FROM review WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        rev = cur.fetchall()
+                        cur.close()
+                        query = "SELECT * FROM theme WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        th =cur.fetchall()
+                        cur.close()
+                        themes = themes + th
+                        reviews = reviews + rev
+                    flash("Found the book(s) you requested.")
+                    return render_template('results.html', books=res, reviews=reviews, current=current, themes=themes)
+                
+            else :
+                query = "SELECT * FROM book WHERE copies = %s;"
+                args = (copies,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchall()
+                cur.close()
+                if len(res) == 0:
+                    flash("No book with the copies you provided exists.")
+                    return redirect(url_for('search'))
+                reviews = []
+                themes = []
+                for x in res:
+                    ISBN = x['ISBN']
                     query = "SELECT * FROM review WHERE ISBN = %s;"
                     args = (ISBN,)
                     cur = db.cursor(buffered=True, dictionary=True)
                     cur.execute(query, args)
-                    reviews = cur.fetchall()
+                    reviews = reviews + cur.fetchall()
                     cur.close()
                     query = "SELECT * FROM theme WHERE ISBN = %s;"
                     args = (ISBN,)
                     cur = db.cursor(buffered=True, dictionary=True)
                     cur.execute(query, args)
-                    themes =cur.fetchall()
+                    themes = themes + cur.fetchall()
                     cur.close()
-                    flash("Found the book(s) you requested.")
-                    return render_template('results.html', books=res, reviews=reviews, current=current, themes=themes)
+                flash("Found the book(s) you requested.")
+                return render_template('results.html', books=res, reviews=reviews, current=current, themes=themes)
         
 
         else :
-            flash("Please provide at least one argument.")
-            return redirect(url_for("search"))
+            # copies are not given as argument
+            
+            if title != '':
+                query = "SELECT * FROM book WHERE title = %s;"
+                args = (title,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchall()
+                cur.close()
+                if len(res) == 0:
+                    flash("No book with the title you provided exists in our database.")
+                    return redirect(url_for('search'))
+                else:
+                    if theme != '':
+                        if author != '':
+                            # title author and theme are not NULL
+                            books = []
+                            query = "SELECT * FROM book WHERE title = %s AND author = %s;"
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            args = (title, author)
+                            cur.execute(query, args)
+                            book = cur.fetchall()
+                            cur.close()
+                            if len(book) == 0:
+                                flash("No book with the title and author you provided exists.")
+                                return redirect(url_for('search'))
+
+                            for b in book:
+                                isbn = b['ISBN']
+                                query = "SELECT * FROM theme WHERE ISBN = %s AND theme_name = %s;"
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                args = (isbn, theme)
+                                cur.execute(query, args)
+                                ans = cur.fetchall()
+                                if len(ans) == 0:
+                                    continue
+                                else :
+                                    curr = db.cursor(buffered=True, dictionary=True)
+                                    query = "SELECT * FROM book WHERE ISBN = %s;"
+                                    args = (isbn,)
+                                    curr.execute(query, args)
+                                    books = books + curr.fetchall()
+                                    curr.close()
+                                cur.close()
+                            
+                            if len(books) == 0:
+                                flash("No book with all the parameters you specified exists.")
+                                return redirect(url_for('search'))
+                            
+                            reviews = []
+                            for x in books:
+                                query = "SELECT * FROM review WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                reviews = reviews + cur.fetchall()
+                                cur.close()
+                            
+                            themes = []
+                            for x in books:
+                                query = "SELECT * FROM theme WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                themes = themes + cur.fetchall()
+                                cur.close()
+
+                            flash("Success!")
+                            return render_template("results.html", books=books, reviews=reviews, current=current, themes=themes)
+                        else :
+                            # title and theme are not NULL, author is NULL
+                            books = []
+                            query = "SELECT * FROM book WHERE title = %s;"
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            args = (title,)
+                            cur.execute(query, args)
+                            book = cur.fetchall()
+                            cur.close()
+                            if len(book) == 0:
+                                flash("No book with the title you provided exists.")
+                                return redirect(url_for('search'))
+                            
+
+                            for b in book:
+                                isbn = b['ISBN']
+                                query = "SELECT * FROM theme WHERE ISBN = %s AND theme_name = %s;"
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                args = (isbn, theme)
+                                cur.execute(query, args)
+                                ans = cur.fetchall()
+                                if len(ans) == 0:
+                                    continue
+                                else :
+                                    curr = db.cursor(buffered=True, dictionary=True)
+                                    query = "SELECT * FROM book WHERE ISBN = %s;"
+                                    args = (isbn,)
+                                    curr.execute(query, args)
+                                    books = books + curr.fetchall()
+                                    curr.close()
+                                cur.close()
+                            
+                            if len(books) == 0:
+                                flash("No book with all the parameters you specified exists.")
+                                return redirect(url_for('search'))
+                            
+                            reviews = []
+                            for x in books:
+                                query = "SELECT * FROM review WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                reviews = reviews + cur.fetchall()
+                                cur.close()
+
+                            themes = []
+                            for x in books:
+                                query = "SELECT * FROM theme WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                themes = themes + cur.fetchall()
+                                cur.close()
+
+                            flash("Success")
+                            return render_template("results.html", books=books, reviews=reviews, current=current, themes=themes)
+                    else :
+                        if author != '':
+                            # title and author are not NULL, theme is NULL
+                            query = "SELECT * FROM book WHERE title = %s AND author = %s;"
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            args = (title, author)
+                            cur.execute(query, args)
+                            book = cur.fetchall()
+                            cur.close()
+                            if len(book) == 0:
+                                flash("No book with the title and author you provided exists.")
+                                return redirect(url_for('search'))
+                            
+                            reviews = []
+                            for x in book:
+                                query = "SELECT * FROM review WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                reviews = reviews + cur.fetchall()
+                                cur.close()
+
+                            themes = []
+                            for x in book:
+                                query = "SELECT * FROM theme WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                themes = themes + cur.fetchall()
+                                cur.close()
+
+                            flash("Success")
+                            return render_template("results.html", books=book, reviews=reviews, current=current, themes=themes)
+                        
+                        else :
+                            # title is not NULL, author and theme are NULL
+                            query = "SELECT * FROM book WHERE title = %s;"
+                            args = (title,)
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            cur.execute(query, args)
+                            books = cur.fetchall()
+                            cur.close()
+                            
+                            reviews = []
+                            for res2 in books:
+                                ISBN = res2['ISBN']
+                                query = "SELECT * FROM review WHERE ISBN = %s;"
+                                args = (ISBN,)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                reviews = reviews + cur.fetchall()
+                                cur.close()
+
+                            themes = []
+                            for x in books:
+                                query = "SELECT * FROM theme WHERE ISBN = %s;"
+                                args = (x['ISBN'],)
+                                cur = db.cursor(buffered=True, dictionary=True)
+                                cur.execute(query, args)
+                                themes = themes + cur.fetchall()
+                                cur.close()
+                            flash("Found the book(s) you requested.")
+                            return render_template('results.html', books=books, reviews=reviews, current=current, themes=themes)
+                
+            if theme != '':
+                if author != '':
+                    query = "SELECT * FROM book WHERE author = %s;"
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    args = (author,)
+                    cur.execute(query, args)
+                    book = cur.fetchall()
+                    cur.close()
+                    if len(book) == 0:
+                        flash("No book with the author you provided exists.")
+                        return redirect(url_for('search'))
+                    books = []
+                    for x in book:
+                        query = "SELECT * FROM theme WHERE ISBN = %s AND theme_name = %s;"
+                        args = (x['ISBN'], theme)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        res = cur.fetchall()
+                        if len(res) == 0:
+                            continue
+                        else :
+                            curr = db.cursor(buffered=True, dictionary=True)
+                            query = "SELECT * FROM book WHERE ISBN = %s;"
+                            args = (x['ISBN'],)
+                            curr.execute(query, args)
+                            books = books + curr.fetchall()
+                            curr.close()
+                        cur.close()
+
+                    if len(books) == 0:
+                        flash("No book with all the parameters you specified exists.")
+                        return redirect(url_for('search'))
+                            
+                    reviews = []
+                    for x in books:
+                        query = "SELECT * FROM review WHERE ISBN = %s;"
+                        args = (x['ISBN'],)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        reviews = reviews + cur.fetchall()
+                        cur.close()
+                    
+                    themes = []
+                    for x in books:
+                        query = "SELECT * FROM theme WHERE ISBN = %s;"
+                        args = (x['ISBN'],)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        themes = themes + cur.fetchall()
+                        cur.close()
+
+                    flash("Success")
+                    return render_template("results.html", books=books, reviews=reviews, current=current, themes=themes)
+                else :
+                    query = "SELECT * FROM theme WHERE theme_name = %s;"
+                    args = (theme,)
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    cur.execute(query, args)
+                    res = cur.fetchall()
+                    cur.close()
+                    if len(res) == 0:
+                        flash("No book with the theme you provided exists in our database.")
+                        return redirect(url_for('search'))
+                    else:
+                        query = "SELECT * FROM theme WHERE theme_name = %s;"
+                        args = (theme,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        res2 = cur.fetchall()
+                        cur.close()
+                        reviews = []
+                        books = []
+                        themes= []
+                        for x in res2:
+                            ISBN = x['ISBN']
+                            query = "SELECT * FROM review WHERE ISBN = %s;"
+                            args = (ISBN,)
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            cur.execute(query, args)
+                            reviews = reviews + cur.fetchall()
+                            cur.close()
+                            query = "SELECT * FROM book WHERE ISBN = %s;"
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            cur.execute(query, args)
+                            books = books + cur.fetchall()
+                            cur.close()
+                            query = "SELECT * FROM theme WHERE ISBN = %s;"
+                            args = (ISBN,)
+                            cur = db.cursor(buffered=True, dictionary=True)
+                            cur.execute(query, args)
+                            themes = themes + cur.fetchall()
+                            cur.close()
+                        flash("Found the book(s) you requested.")
+                        return render_template('results.html', books=books, reviews=reviews, current=current, themes=themes)
+
+            if author != '':
+                query = "SELECT * FROM book WHERE author = %s;"
+                args = (author,)
+                cur = db.cursor(buffered=True, dictionary=True)
+                cur.execute(query, args)
+                res = cur.fetchall()
+                cur.close()
+                if len(res) == 0:
+                    flash("No book with the author you provided exists in our database.")
+                    return redirect(url_for('search'))
+                else:
+                    query = "SELECT * FROM book WHERE author = %s;"
+                    args = (author,)
+                    cur = db.cursor(buffered=True, dictionary=True)
+                    cur.execute(query, args)
+                    res2 = cur.fetchall()
+                    cur.close()
+                    themes = []
+                    reviews = []
+                    for x in res2:
+                        ISBN = x['ISBN']
+                        query = "SELECT * FROM review WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        rev = cur.fetchall()
+                        cur.close()
+                        query = "SELECT * FROM theme WHERE ISBN = %s;"
+                        args = (ISBN,)
+                        cur = db.cursor(buffered=True, dictionary=True)
+                        cur.execute(query, args)
+                        th =cur.fetchall()
+                        cur.close()
+                        themes = themes + th
+                        reviews = reviews + rev
+                    flash("Found the book(s) you requested.")
+                    return render_template('results.html', books=res, reviews=reviews, current=current, themes=themes)
         
     return render_template('search.html')
 
@@ -1607,7 +1982,7 @@ def make_reservation(ISBN):
             cur.execute(query, args)
             db.commit()
             cur.close()
-            flash("Your reservation was made successfully.")
+            flash("Your reservation was made successfully, pick up the book from the library.")
             update_table()
 
             return redirect(url_for('books'))
@@ -1691,6 +2066,7 @@ def rdelete(reservation_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
+        update_reservations()
         update_table()
         flash("Reservation was cancelled successfully.")
         return redirect(url_for('view_reservations'))
@@ -1831,7 +2207,7 @@ def register_borrow():
         cur.execute(query, args)
         res = cur.fetchone()
         cur.close()
-        if (res != session['school_id']):
+        if (res['school_id'] != session['school_id']):
             flash("Can't register the borrowing of a book that is not in your school.")
             return (redirect(url_for('books')))
 
@@ -2840,3 +3216,133 @@ def admin_query7():
         return redirect(url_for('main_page'))
     
     return render_template("query7.html", authors=res, ans=ans)
+
+# create backup for database
+@app.route("/backup")
+@admin_required
+def backup():
+    exit_code = os.system("mysqldump -u root -padmin mydb > src/sql/backup/backup.sql")
+    if exit_code == 0:
+        flash("Backup successful, saved in src/sql/backup directory.")
+    else :
+        flash("Backup failed.")
+    return redirect(url_for('main_page'))
+
+# restore database from backup
+@app.route("/restore")
+@admin_required
+def restore():
+    code1 = os.system("mysql -u root -padmin drop database mydb;")
+    if code1 == 256:
+        flash("Successfully dropped database.")
+    else :
+        flash("Failed to drop database.")
+        return redirect(url_for('main_page'))
+    code2 = os.system("mysql -u root -padmin source src/sql/schema.sql;")
+    if code2 == 256:
+        flash("Successfully created database.")
+    else :
+        flash("Failed to create database.")
+        return redirect(url_for('main_page'))
+    exit_code = os.system("mysql -u root -padmin mydb < src/sql/backup/backup.sql")
+    if exit_code == 0:
+        flash("Restore successful.")
+    else :
+        flash("Restore failed.")
+    return redirect(url_for('main_page'))
+
+# view school information
+@app.route("/school_info", methods=('GET', 'POST'))
+@admin_required
+def school_info():
+    if request.method == 'GET':
+        query = "SELECT * FROM school;"
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query)
+        schools = cur.fetchall()
+        cur.close()
+        return render_template("school_info.html", schools=schools)
+    
+    return redirect(url_for('main_page'))
+
+# edit school information
+@app.route("/<int:school_id>/edit_school_info", methods=('GET', 'POST'))
+@admin_required
+def edit_school_info(school_id):
+    if request.method == 'GET':
+        query = "SELECT * FROM school WHERE school_id = %s;"
+        args = (school_id,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        school = cur.fetchone()
+        cur.close()
+        return render_template("edit_school_info.html", school=school)
+    else :
+
+
+        query = "SELECT * FROM school WHERE school_id = %s;"
+        args = (school_id,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        school = cur.fetchone()
+        cur.close()
+        school_name = request.form['school_name']
+        address = request.form['address']
+        city = request.form['city']
+        phone = request.form['phone']
+        email = request.form['email']
+        dname = request.form['dname']
+        dsurname = request.form['dsurname']
+        hname = request.form['hname']
+        hsurname = request.form['hsurname']
+        hactivated = request.form['hactivated']
+        if phone != '' and not checkInt(phone):
+            flash("Phone number must be integers.")
+            return redirect(url_for('edit_school_info', school_id=school_id))
+        if school_name == '':
+            school_name = school['school_name']
+        if address == '':
+            address = school['address_name']
+        if city == '':
+            city = school['city']
+        if phone == '':
+            phone = school['phone_number']
+        if email == '':
+            email = school['email']
+        if dname == '':
+            dname = school['director_name']
+        if dsurname == '':
+            dsurname = school['director_surname']
+        if hname == '':
+            hname = school['handler_name']
+        if hsurname == '':
+            hsurname = school['handler_surname']
+        if hactivated == '':
+            hactivated = school['handler_activated']
+        if hactivated != 'T' and hactivated != 'F':
+            flash("Handler activated must be T or F.")
+            return redirect(url_for('edit_school_info', school_id=school_id))
+        if len(city) > 49 or len(address) > 99 or len(school_name) > 99 or len(email) > 49 or len(dname) > 49 or len(dsurname) > 49 or len(hname) > 49 or len(hsurname) > 49:
+            flash("Input too long.")
+            return redirect(url_for('edit_school_info', school_id=school_id))
+        query = """UPDATE school
+                    SET
+                    school_name = %s,
+                    address_name = %s,
+                    city = %s,
+                    phone_number = %s,
+                    email = %s,
+                    director_name = %s,
+                    director_surname = %s,
+                    handler_name = %s,
+                    handler_surname = %s,
+                    handler_activated = %s
+                    WHERE
+                    school_id = %s;"""
+        args = (school_name, address, city, phone, email, dname, dsurname, hname, hsurname, hactivated, school_id)
+        cur = db.cursor()
+        cur.execute(query, args)
+        db.commit()
+        cur.close()
+        flash("School information updated successfully.")
+        return redirect(url_for('edit_school_info', school_id=school_id))

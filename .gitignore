@@ -9,4 +9,5 @@ src/sql/insert.sql
 src/sql/test.sql
 run_once.py
 test.py
+src/sql/backup/backup.sql
 diagrams/

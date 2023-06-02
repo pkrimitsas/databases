@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Edit school information{% endblock %}</h1>
+  {% if session.is_admin %}
+  <a class="action" href="{{ url_for('main_page') }}">Main Page</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+    <article class="School Info">
+      <header>
+        <div>
+            <div class="about">School name : {{ school['school_name'] }}</div>
+            <div class="about">School Id : {{ school['school_id'] }}</div>
+            <div class="about">Address : {{ school['address_name'] }}</div>
+            <div class="about">City : {{ school['city'] }}</div>
+            <div class="about">Phone number : {{ school['phone_number'] }}</div>
+            <div class="about">Email : {{ school['email'] }}</div>
+            <div class="about">Director name : {{ school['director_name'] }}</div>
+            <div class="about">Director surname : {{ school['director_surname'] }}</div>
+            <div class="about">Handler name : {{ school['handler_name'] }}</div>
+            <div class="about">Handler surname : {{ school['handler_surname'] }}</div>
+            {% if school['handler_activated'] == 'T' %}
+              <div class="about">Handler activated : Yes</div>
+            {% else %}
+              <div class="about">Handler activated : No</div>
+            {% endif %}
+        </div>
+        <form method="post">
+            <label for="school_name">School name</label>
+            <input name="school_name" id="school_name">
+            <input type="submit" value="Change">
+            <label for="address">Address</label>
+            <input type="username" name="address" id="address">
+            <input type="submit" value="Change">
+            <label for="pages">City</label>
+            <input type="username" name="city" id="city">
+            <input type="submit" value="Change">
+            <label for="summary">Phone number</label>
+            <input type="username" name="phone" id="phone">
+            <input type="submit" value="Change">
+            <label for="copies">Email</label>
+            <input type="username" name="email" id="email">
+            <input type="submit" value="Change">
+            <label for="picture">Director name</label>
+            <input type="username" name="dname" id="dname">
+            <input type="submit" value="Change">
+            <label for="language">Director surname</label>
+            <input type="username" name="dsurname" id="dsurname">
+            <input type="submit" value="Change">
+            <label for="keywords">Handler name</label>
+            <input type="username" name="hname" id="hname">
+            <input type="submit" value="Change">
+            <label for="keywords">Handler surname</label>
+            <input type="username" name="hsurname" id="hsurname">
+            <input type="submit" value="Change">
+            <label for="keywords">Handler activated</label>
+            <input type="username" name="hactivated" id="hactivated">
+            <input type="submit" value="Change">
+          </form>
+      </header>
+    </article>
+{% endblock %}
