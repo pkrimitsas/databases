@@ -25,6 +25,26 @@ def update_reservations():
     db.commit()
     curr.close()
 
+# function to mark 1 reservation as active when a book is returned
+def mark_as_active(ISBN):
+    query = "SELECT * FROM reservations WHERE ISBN = %s AND is_active = 'F' AND is_over = 'F' ORDER BY tdate ASC LIMIT 1;"
+    cur = db.cursor(buffered=True, dictionary=True)
+    args = (ISBN,)
+    cur.execute(query, args)
+    res = cur.fetchone()
+    cur.close()
+    if res is None or len(res) == 0:
+        return
+    tdate = datetime.datetime.now().replace(microsecond=0)
+    rdate = tdate + datetime.timedelta(days=7)
+    query = "UPDATE reservations SET is_active = 'T', tdate = %s, rdate = %s WHERE reservation_id = %s;"
+    args = (tdate, rdate, res['reservation_id'])
+    curr = db.cursor()
+    curr.execute(query, args)
+    db.commit()
+    curr.close()
+
+
 
 def update_table():
     query = "SELECT * FROM currently_available;"
@@ -2047,7 +2067,7 @@ def make_reservation(ISBN):
 def view_reservations():
     update_reservations()
     username = session['username']
-    query = 'SELECT * FROM reservations WHERE username = %s;'
+    query = "SELECT * FROM reservations WHERE username = %s AND is_over = 'F';"
     args = (username,)
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query, args)
@@ -2076,7 +2096,7 @@ def rdelete(reservation_id):
 @handler_required
 def vreservations(ISBN):
     update_reservations()
-    query = "SELECT * FROM reservations WHERE ISBN = %s;"
+    query = "SELECT * FROM reservations WHERE ISBN = %s AND is_over = 'F';"
     args = (ISBN,)
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query, args)
@@ -2312,6 +2332,7 @@ def register_return():
         db.commit()
         cur.close()
 
+        mark_as_active(ISBN)
         update_table()
         flash("Successfully registered the return of this book.")
         return redirect(url_for('books'))
@@ -2322,7 +2343,7 @@ def register_return():
 @handler_required
 def view_borrowings():
     update_reservations()
-    query = "SELECT * FROM now_borrowed WHERE school_id = %s;"
+    query = "SELECT * FROM now_borrowed WHERE school_id = %s AND is_returned = 'F';"
     cur = db.cursor(buffered=True, dictionary=True)
     args = (session['school_id'],)
     cur.execute(query, args)
@@ -2341,6 +2362,13 @@ def make_return(transaction_id):
         cur.execute(query, args)
         db.commit()
         cur.close()
+        query = "SELECT * FROM now_borrowed WHERE transaction_id = %s;"
+        args = (transaction_id,)
+        cur = db.cursor(buffered=True, dictionary=True)
+        cur.execute(query, args)
+        res = cur.fetchone()
+        cur.close()
+        mark_as_active(res['ISBN'])
         update_table()
         flash("Successfully registered the return.")
         return redirect(url_for('books'))

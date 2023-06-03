@@ -68,9 +68,15 @@
           <a class="action" href="{{ url_for('add_review', ISBN=book['ISBN']) }}">Add Review</a>
           {% for curr in current %}
             {% if curr['ISBN'] == book['ISBN'] %}
+              {% if curr['current'] > 0 %}
+                <form action="{{ url_for('make_reservation', ISBN=book['ISBN']) }}" method="post">
+                  <input type="submit" value="Request to borrow">
+                </form>
+              {% else %}
                 <form action="{{ url_for('make_reservation', ISBN=book['ISBN']) }}" method="post">
                   <input type="submit" value="Make reservation">
                 </form>
+              {% endif %}
             {% endif %}
           {% endfor %}
         {% endif %}

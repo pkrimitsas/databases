@@ -55,7 +55,7 @@ create table handlers (
     constraint fk_handl_person_id foreign key (person_id) references person (person_id) on delete cascade on update cascade
 );
 
--- user(person_id, username, pass, is_active, is_student)
+-- user(person_id, username, pass, is_active, is_student, school_id)
 create table user (
         person_id int unsigned not null,
         username varchar(50) not null,
@@ -71,7 +71,7 @@ create table user (
     constraint fk_person_id foreign key (person_id) references person (person_id) on delete cascade on update cascade    
 );
 
--- book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, theme, blanguage, keywords)
+-- book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, blanguage, keywords, school_name)
 create table book (
         school_id int unsigned not null,
         title varchar(200) not null,
@@ -117,6 +117,7 @@ create table currently_available (
     constraint fk_curr_ISBN foreign key (ISBN) references book (ISBN) on delete cascade on update cascade
 );
 
+-- reservations(reservation_id, ISBN, tdate, username, rdate, is_active, is_over)
 create table reservations (
         reservation_id int unsigned not null auto_increment,
         ISBN varchar(17) not null,
@@ -132,6 +133,7 @@ create table reservations (
     constraint fk_user_reserv foreign key (username) references user (username) on delete cascade on update cascade
 );
 
+-- now_borrowed(transaction_id, ISBN, username, start_d, is_returned, return_date, school_id)
 create table now_borrowed (
         transaction_id int unsigned not null auto_increment,
         ISBN varchar(17) not null,
@@ -147,6 +149,7 @@ create table now_borrowed (
     constraint ck_bool check (is_returned in ('T', 'F'))
 );
 
+-- theme(indexer, ISBN, theme_name)
 create table theme (
         indexer int unsigned not null auto_increment,
         ISBN varchar(17) not null,
