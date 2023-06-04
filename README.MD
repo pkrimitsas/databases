@@ -17,7 +17,7 @@ sudo apt install python3
 ___
 - ## Install apache2
 
- ###  [Apache2 installation](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-18-04) for instructions
+ ###  [Apache2 installation](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-18-04) for instructions, follow until step 4.
 
 ___
 
