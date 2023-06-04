@@ -21,7 +21,7 @@ ___
 
 ___
 
-- ## Install MySQL AND set password to 'admin', make sure to run 'sudo mysql_secure_installation'
+- ## Install MySQL AND set password to 'admin123', make sure to run 'sudo mysql_secure_installation'
 
 ## [MySQL Installation](https://learnubuntu.com/install-mysql/)
 ___
@@ -43,7 +43,7 @@ pip3 install -e .
 ___
 
 - ## Start MySQL to prepare for table creation
-- ### (It will ask for password, provide 'admin' as you set while installing MySQL)
+- ### (It will ask for password, provide 'admin123' as you set while installing MySQL)
 
 ```bash
 sudo mysql -u root -p

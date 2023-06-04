@@ -146,7 +146,7 @@ def admin_login():
     update_reservations()
     clear_session()
     if request.method == 'POST':
-        if request.form['username'] != 'root' or request.form['password'] != 'admin':
+        if request.form['username'] != 'root' or request.form['password'] != 'admin123':
             flash("Wrong credentials for user admin.")
             return redirect(url_for('index'))
         else:
@@ -454,7 +454,7 @@ def handler_login():
 @admin_required
 def admin_page():
     update_reservations()
-    query = "SELECT school_id, handler_name, handler_surname, handler_activated FROM school;"
+    query = "SELECT school_id, school_name, handler_name, handler_surname, handler_activated FROM school;"
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query)
     persons = cur.fetchall()

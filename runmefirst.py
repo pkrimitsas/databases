@@ -1,5 +1,5 @@
 import mysql.connector
-db = mysql.connector.connect(host = "localhost", user = "root", password = "admin", database = "mydb")
+db = mysql.connector.connect(host = "localhost", user = "root", password = "admin123", database = "mydb")
 from faker import Faker
 import random
 import datetime
@@ -141,8 +141,8 @@ for i in range (11):
         j = 1
     query = "INSERT INTO theme(indexer, ISBN, theme_name) VALUES (0, %s, %s);"
     theme_name = theme_list[check[i]]
-    # insert 11 books into each theme
-    for _ in range (1, 12):
+    # insert 20 books into each theme
+    for _ in range (1, 21):
         j = j % 101
         if j == 0:
             j = 1

@@ -10,11 +10,12 @@
     <article class="Handlers">
       <header>
         <div>
-          <h1>{{ handler['handler_name'] }}  {{ handler['handler_surname'] }}</h1>
+          <h1>School : {{ handler['school_name'] }} with school id : {{ handler['school_id'] }}</h1>
+          <div class="about">Handler Information</div>
           {% if handler['handler_activated'] == None or handler['handler_activated'] == 'F'%}
-            <div class="about">username: {{ handler['handler_username'] }} password: {{ handler['handler_password'] }} and account is not activated.</div>
+            <div class="about">Name: {{ handler['handler_name'] }}, Last name : {{ handler['handler_surname'] }} and account is not activated.</div>
           {% else %}
-            <div class="about">username: {{ handler['handler_username'] }} password: {{ handler['handler_password'] }} and account is activated.</div>
+            <div class="about">Name: {{ handler['handler_name'] }} Last name : {{ handler['handler_surname'] }} and account is activated.</div>
           {% endif %}
         </div>
         {% if handler['handler_activated'] == None or handler['handler_activated'] == 'F'%}
