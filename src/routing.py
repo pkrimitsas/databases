@@ -854,12 +854,12 @@ def add_book():
         cur = db.cursor()
         try:
             cur.execute(query, args)
-            db.commit()
-            cur.close()
+            #db.commit()
+            #cur.close()
 
             query = "INSERT INTO theme(indexer, ISBN, theme_name) VALUES (0, %s, %s);"
             args = (isbn, theme1)
-            cur = db.cursor()
+            #cur = db.cursor()
             cur.execute(query, args)
             if theme2 != '':
                 args = (isbn, theme2)
@@ -872,6 +872,7 @@ def add_book():
             query = "INSERT INTO currently_available(ISBN, current) VALUES (%s, %s);"
             args = (isbn, copies)
             cur.execute(query, args)
+            # commit once so if something goes wrong no values are inserted
             db.commit()
             cur.close()
             flash("Your book was addedd successfully.")
