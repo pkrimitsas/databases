@@ -3,7 +3,6 @@ src/__pycache__
 src.egg-info/
 __pycache__/
 picture.png
-*.txt
 test3.py
 src/sql/insert.sql
 src/sql/test.sql
