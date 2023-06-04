@@ -96,6 +96,11 @@ author_list = ["author1", "author2", "author3", "author4",
 
 dict = {}
 # create 100 books
+image_urls = ["https://m.media-amazon.com/images/I/71jLBXtWJWL._AC_UF1000,1000_QL80_.jpg",
+              "https://i2-prod.walesonline.co.uk/incoming/article6890072.ece/ALTERNATES/s615b/hp1.jpg",
+              "https://i.imgur.com/IibDqjf.jpg",
+              "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1392127698i/260531.jpg",
+              "https://m.media-amazon.com/images/I/710+HcoP38L._AC_UF1000,1000_QL80_.jpg",]
 for i in range(101):
     query = """INSERT INTO book(school_id, title, publisher, ISBN, author, pages, summary, copies, picture, blanguage, keywords, school_name) \
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
@@ -113,7 +118,9 @@ for i in range(101):
     pages = random.randrange(100, 1000)
     summary = fake.text()
     copies = random.randrange(1, 10)
-    picture = fake.image_url()
+    im_url = random.randrange(0, 5)
+    picture = image_urls[im_url]
+    #picture = fake.image_url()
     language = fake.country()
     keywords = fake.sentence()
 
