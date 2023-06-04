@@ -15,9 +15,13 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install python3
 ```
 ___
+- ## Install apache2
 
-- ## Install MySQL AND set password to 'admin'
-- ## Make sure to run 'sudo mysql_secure_installation'
+ ###  [Apache2 installation](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-18-04) for instructions
+
+___
+
+- ## Install MySQL AND set password to 'admin', make sure to run 'sudo mysql_secure_installation'
 
 ## [MySQL Installation](https://learnubuntu.com/install-mysql/)
 ___
