@@ -33,7 +33,7 @@ ___
 - ## Install the project libraries
 
 ```bash
-pip install -e .
+pip3 install -r requirements.txt
 ```
 
 ___
