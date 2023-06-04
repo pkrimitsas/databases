@@ -81,3 +81,7 @@ ___
 - ## Use the app
 
 ## [http://localhost:5000](http://localhost:5000/)
+
+___
+
+- ## For usage information, click [here](https://github.com/pkrimitsas/databases/blob/master/manual/manual.pdf).

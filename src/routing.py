@@ -327,7 +327,7 @@ def login():
             session['username'] = request.form["username"]
             session['person_id'] = res[0]
             session['activated'] = "T"
-            return redirect(url_for('books'))
+            return redirect(url_for('main_page'))
         
         flash(error)
 
@@ -2109,7 +2109,7 @@ def rdelete(reservation_id):
 @handler_required
 def vreservations(ISBN):
     update_reservations()
-    query = "SELECT * FROM reservations WHERE ISBN = %s AND is_over = 'F';"
+    query = "SELECT * FROM reservations WHERE ISBN = %s AND is_over = 'F' AND is_active = 'T';"
     args = (ISBN,)
     cur = db.cursor(buffered=True, dictionary=True)
     cur.execute(query, args)
@@ -2146,6 +2146,9 @@ def make_borrow(reservation_id):
         cur.execute(query, args)
         st = cur.fetchone()
         cur.close()
+        if st is None or len(st) == 0:
+            flash("No such user exists.")
+            return redirect(url_for('books'))
         if st['is_student'] == 'F':
             is_student = 'F'
         elif st['is_student'] == 'T':
@@ -2322,28 +2325,6 @@ def register_borrow():
         db.commit()
         cur.close()
 
-        # also mark the last active reservation about this title as inactive
-        query = "SELECT * FROM reservations WHERE is_active = 'T' AND is_over = 'F' AND ISBN = %s ORDER BY reservation_id DESC LIMIT 1;"
-        args = (ISBN,)
-        cur = db.cursor(buffered=True, dictionary=True)
-        cur.execute(query, args)
-        res = cur.fetchone()
-        cur.close()
-        if res is None or len(res) == 0:
-            update_table()
-            flash("Successfully registered the borrowing.")
-            return redirect(url_for('books'))
-        
-        # reservation will be activated later
-        query = "UPDATE reservations SET is_active = 'F', tdate = %s, rdate = %s WHERE reservation_id = %s;"
-        start = tdate + datetime.timedelta(days=7)
-        end = start + datetime.timedelta(days=7)
-        args = (start, end, res['reservation_id'])
-        cur = db.cursor()
-        cur.execute(query, args)
-        db.commit()
-        cur.close()
-
         update_table()
 
         flash("Successfully registered the borrowing.")
@@ -2377,7 +2358,7 @@ def register_return():
         #check for valid input
         username = request.form['user']
         args = (username, ISBN)
-        query = "SELECT * FROM now_borrowed WHERE username = %s AND ISBN = %s;"
+        query = "SELECT * FROM now_borrowed WHERE username = %s AND ISBN = %s AND is_returned = 'F';"
         cur = db.cursor(buffered=True, dictionary=True)
         cur.execute(query, args)
         res = cur.fetchall()
@@ -2387,12 +2368,16 @@ def register_return():
             flash("You made a spelling mistake, no such active borrowing exists.")
             return redirect(url_for('register_return'))
         
-        query = "UPDATE now_borrowed SET is_returned = 'T' WHERE username = %s AND ISBN = %s;"
+        query = "UPDATE now_borrowed SET is_returned = 'T', return_date = %s WHERE username = %s AND ISBN = %s;"
         cur = db.cursor()
+        tdate = datetime.datetime.now().replace(microsecond=0)
+        args = (tdate, username, ISBN)
         cur.execute(query, args)
         db.commit()
         cur.close()
 
+        # mark one reservation as active for this ISBN
+        # since we got a return
         mark_as_active(ISBN)
         update_table()
         flash("Successfully registered the return of this book.")
@@ -2417,8 +2402,9 @@ def view_borrowings():
 def make_return(transaction_id):
     update_reservations()
     if request.method == 'POST':
-        query = "UPDATE now_borrowed SET is_returned = 'T' WHERE transaction_id = %s;"
-        args = (transaction_id,)
+        query = "UPDATE now_borrowed SET is_returned = 'T', return_date = %s WHERE transaction_id = %s;"
+        tdate = datetime.datetime.now().replace(microsecond=0)
+        args = (tdate, transaction_id)
         cur = db.cursor()
         cur.execute(query, args)
         db.commit()
@@ -2429,6 +2415,8 @@ def make_return(transaction_id):
         cur.execute(query, args)
         res = cur.fetchone()
         cur.close()
+        # make one reservation active
+        # since we have one return
         mark_as_active(res['ISBN'])
         update_table()
         flash("Successfully registered the return.")
@@ -2450,7 +2438,7 @@ def search_user():
         user_info = cur.fetchone()
         cur.close()
         if user_info is None:
-            flash("No such user exists.")
+            flash("No such user exists in your school.")
             return redirect(url_for('search_user'))
         args = (username,)
         query = "SELECT * FROM now_borrowed WHERE username = %s;"
@@ -2463,6 +2451,8 @@ def search_user():
         cur.execute(query, args)
         reservations = cur.fetchall()
         cur.close()
+        # we only see active reservations and active borrowings, to change this
+        # change the if in user_results.html
         return render_template('user_results.html', info = user_info, borrowings = borrowings, reservations = reservations)
     
     return render_template('search_user.html')
