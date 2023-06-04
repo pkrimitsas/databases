@@ -11,3 +11,5 @@ run_once.py
 test.py
 src/sql/backup/backup.sql
 diagrams/
+MANIFEST.in
+setup.py

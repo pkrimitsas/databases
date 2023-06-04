@@ -1,5 +1,0 @@
-include src/sql
-include src/routing.py
-graft src/static
-graft src/templates
-global-exclude *.pyc
